@@ -1,0 +1,208 @@
+require "pureapp_integration"
+
+module Integrity
+  class App < Sinatra::Default
+    set :root,     File.dirname(__FILE__) + "/../.."
+    set :app_file, __FILE__
+    enable :sessions
+
+    include Integrity
+    include Integrity::Helpers
+
+    not_found do
+      status 404
+      show :not_found, :title => "lost, are we?"
+    end
+    
+    use PureappIntegration
+    
+    error do
+      @error = request.env["sinatra.error"]
+      status 500
+      show :error, :title => "something has gone terribly wrong"
+    end
+
+    before do
+      # The browser only sends http auth data for requests that are explicitly
+      # required to do so. This way we get the real values of +#logged_in?+ and
+      # +#current_user+
+      request.env['REMOTE_USER'] = session[:user] if session[:user]
+#      login_required if session[:user]
+    end
+
+    get "/integrity.css" do
+      response["Content-Type"] = "text/css; charset=utf-8"
+      etag stylesheet_hash
+      sass :integrity
+    end
+    
+    get "/" do
+      show :index, :title => "pureapp"
+    end
+
+    post "/product_signup" do
+      @product_signup = ProductSignup.new(params[:product_signup])
+      @product_signup.save
+      redirect root_url.to_s
+    end    
+    
+    get "/project" do
+      login_required
+      @user = User.first(:remote_user_id => session[:user].id)
+      @account = @user.account
+      @projects = @account.projects
+      show :home, :title => "projects"
+    end
+
+    get "/project/edit" do
+      login_required
+      @project = Project.first(:id=>params['id'])
+      redirect project_path(@project, :edit) 
+    end
+
+    get "/login" do
+      login_required
+
+      session[:user] = current_user
+      redirect root_url.to_s
+    end
+
+    get "/callbacks/sso" do
+      @account = Account.first(:remote_account_id => session[:user].account_id)
+      
+      if !@account
+         @account = Account.new(:remote_user_id =>session[:user].id,:remote_account_id =>session[:user].account_id)
+         @account.save!
+      end
+      
+      @user = User.first(:remote_user_id => session[:user].id)
+      
+      if !@user
+         @user = User.new(:remote_user_id =>session[:user].id,
+                          :remote_account_id =>session[:user].account_id,
+                          :first_name=> session[:user].first_name,
+                          :last_name => session[:user].last_name,
+                          :email => session[:user].email
+                          )
+         @user.account = @account
+         @user.save!
+      end
+      
+      redirect "#{root_url.to_s}/project"
+    end
+
+    get "/pricing_and_signup" do
+      show :plan, :title => ["Pricing and Signup"]
+    end
+
+    get "/change_plan" do
+      show :change_plan, :title => ["Change plan"]
+    end    
+    
+    get "/project/new" do
+      login_required
+      @project = Project.new
+      @build_commands = BuildCommand.all
+      show :new, :title => ["projects", "new project"]
+    end
+
+    post "/project/?" do
+      puts "======================="
+      login_required
+      @user = User.first(:remote_user_id => session[:user].id)
+      @account = @user.account
+      @project = Project.new(params[:project_data])
+      
+      @project.command = params[:project_data][:command].join(" && ") if params[:project_data][:command].is_a?(Array)
+      
+      @project.account = @account
+      if @project.save
+        update_notifiers_of(@project)
+         puts "=========#{@project.inspect}=============="
+#        redirect project_url(@project).to_s
+        redirect '/projects?tab=active'
+      else
+        @build_commands = BuildCommand.all
+        show :new, :title => ["projects", "new project"]
+      end
+    end
+
+    get "/:project.atom" do
+      login_required 
+      response["Content-Type"] = "application/rss+xml; charset=utf-8"
+      builder :project
+    end
+
+    get "/:project" do
+      login_required 
+      show :project, :title => ["projects", current_project.name]
+    end
+
+    put "/project/:project" do
+      login_required
+
+      if current_project.update_attributes(params[:project_data])
+        current_project.command = params[:project_data][:command].join(" && ") if params[:project_data][:command].is_a?(Array)        
+        update_notifiers_of(current_project)
+#redirect project_url(current_project).to_s
+        redirect '/projects?tab=active'
+      else
+        show :new, :title => ["projects", current_project.permalink, "edit"]
+      end
+    end
+
+    delete "/project/:project" do
+      login_required
+
+      current_project.destroy
+       redirect '/projects?tab=active'
+       #redirect root_url.to_s
+    end
+
+    get "/project/:project/edit" do
+      login_required
+      @build_commands = BuildCommand.all
+      show :new, :title => ["projects", current_project.permalink, "edit"]
+    end
+
+    post "/project/:project/push" do
+      content_type "text/plain"
+      begin
+        current_project_push.push(params[:payload])
+        201
+      rescue ArgumentError
+        [422, "Invalid Request"]
+      end
+    end
+
+    get "/project/builds" do
+      login_required
+      @project = Project.first(:id=>params['id'])
+      redirect project_path(@project, :builds) 
+    end
+
+    get "/project/:project/builds" do
+       login_required
+       current_project.build
+#       redirect project_url(current_project).to_s
+       redirect '/projects?tab=active'
+    end
+
+    get "/:project/commits/:commit" do
+      login_required 
+
+      show :build, :title => ["projects", current_project.permalink, current_commit.short_identifier]
+    end
+
+    get "/:project/builds/:commit" do
+      redirect "/#{params[:project]}/commits/#{params[:commit]}", 301
+    end
+
+    post "/:project/commits/:commit/builds" do
+      login_required
+
+      current_project.build(params[:commit])
+      redirect commit_url(current_commit).to_s
+    end
+  end
+end

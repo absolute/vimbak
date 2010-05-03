@@ -1,0 +1,16 @@
+class RobotsController < ApplicationController
+  def new
+    @district = District.find(params[:district_id])
+    @robot = Robot.new
+  end
+
+  def create
+    @robot = Robot.new(params[:district])
+    if @robot.save
+    flash[:notice] = "New robot created."
+    redirect_to districts_path
+    else
+      render :action => :new
+    end
+  end
+end

@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+   <%= javascript_include_tag :defaults %>
+	 <%= stylesheet_link_tag 'popup.css' %>
+   <meta name="robots" content="noindex">
+   <%= stylesheet_link_tag 'common_css/absolute_central_draft.css' %>
+   <%= stylesheet_link_tag 'app.css' %>
+   <%= stylesheet_link_tag "footer.css"%>
+   <!-- IE6 & IE7 hacks and patch-->
+   <!--[if lte IE 7]>
+     <link href="/stylesheets/common_css/patch_styling.css?1252145376" media="screen" rel="stylesheet" type="text/css" />
+   <![endif]-->
+
+	<!--[if IE]>
+	<style type="text/css">
+	#nav5 ul {display:inline-block;}
+	#nav5 ul {display:inline;}
+	#nav5 ul li {float:left;}
+	#nav5 {text-align:center;}
+	</style>
+	<![endif]-->
+
+   <style type="text/css">
+		#other_applications{ display: none; }
+		#footer_widget hr {border-bottom:1px solid #CCCCCC;display: none;}
+   </style>
+</head>
+<body>
+<div style="width: 100%;" id="fixme">
+	<div align="center">
+        	<table>
+                  <tr>
+                  	   <td>
+           	   	         <div id="loading" style="display:none;" ><%= image_tag("loading45.gif",:class=>"loading",:size=>"20x20") %><span class="pro_team">Loading</span></div>
+						<span  id="id_of_element">
+							<%if flash[:notice] %>
+						        <p class="notice"><%= flash[:notice] %></p>
+							<%elsif flash[:error]%>	
+						        <p class="error"><%= flash[:error] %></p>
+							<%end%>
+                        </span>
+						<div id="edit_error"> </div>
+                       </td>
+				  </tr>
+            </table>
+	</div>
+</div>
+<script type="text/javascript">
+Effect.Fade('id_of_element', { duration: 10.0 });
+</script>
+<div class="page_margins"> 
+ <div class="page">
+    <div id="header"> 
+        <div class="text_right" id="plain_link" style="font-size:11px;padding:2px;">
+		       <%if session[:user]!= nil%>
+			  	   <span style="color:#5195CE;">Welcome <%= session[:user].first_name.capitalize  %> <%= session[:user].last_name. capitalize  %></span>&nbsp;&nbsp; |&nbsp;&nbsp;
+		       <% end%>
+				   <%=link_to "Help", :action=>"help"%> &nbsp;&nbsp;|&nbsp;&nbsp;
+		       <%if session[:user]==nil%>
+			       <%=link_to "Pricing & SignUp", "/scrumboard/show_user_plans" %> &nbsp;&nbsp;|&nbsp;&nbsp;
+				   <%=link_to "Login" ,  "/account/login" %> 
+			   <%else%>
+				   <%=link_to "Logout", "/account/logout" %>   
+		       <% end%>
+		</div> <!-- top-nav ends -->   
+		<table width="100%">
+			<tr>
+				<td width="16%" valign="top">
+				    <span> <%=link_to image_tag("pairworks.png") , "/"%></span>
+				</td>
+				<td>
+					
+					<ul class="menu2">
+					 <%if session[:user]!= nil%>
+					<% current_page?(:controller => 'scrumboard', :action => 'dashboard') ? class_name="current" : class_name=""%>
+						<li class= "<%= class_name%>" >
+							   <%=link_to "<b>Dashboard</b>","/account/login"%> 
+						</li>
+					 <% end %>
+						<% current_page?(:controller=>"scrumboard",:action => 'tools') ||current_page?(:controller=>"product_backlogs",:action => 'show') ? class_name1="current" : class_name1=""%>
+	             		<li class= "<%= class_name1 %>" id="active_project_s">
+						<a href=""><b>Projects<small>&#9660;</small></b></a>
+							<ul  id="active_project_content" class="contentuls">
+                              <% if !@account.active_projects.empty?%> 
+									<% for project in @account.active_projects%>
+								     <li > <%= link_to project.title.capitalize ,:action=>"tools",:controller=>"scrumboard",:id=>project.current_iteration.id %>	</li>
+								   <% end %>
+						      <% else %>
+				                    <li> No Active Projects</li>
+							  <% end %>
+							</ul>
+						</li>
+			<script type='text/javascript'>
+			//<![CDATA[	
+				new Tip('active_project_s', $('active_project_content'), {
+				  hideOn: { element: 'tip', event: 'mouseout'},
+                   hideAfter: 0.1,
+				  hook: { tip: 'topLeft', target: 'bottomLeft'},
+				  className: 'darkgrey'
+				});
+			//]]>
+			</script>	
+
+						<% current_page?(:controller => 'teams') || current_page?(:controller => 'scrumboard',:action=> "manage_team_with_people") || current_page?(:controller => 'teams',:action=>"show") ? class_name2="current" : class_name2=""%>
+						<li class= "<%= class_name2 %>" id="team_wall" >
+						<a href=""><b>	Team<small>&#9660;</small></b></a>
+							<ul id="team_wall_content" class="contentuls">
+								<li> <%= link_to "Team Wall" ,:controller=>"teams" %>	</li>
+								<li> <%= link_to "Manage Teams" ,:action=>"manage_team_with_people",:controller=>"scrumboard" %> </li>
+						    <% if session[:user]!=nil && (session[:user].id)== @account.remote_user_id %>
+							    <li><%=link_to "People", "/account/users" %> </li>
+						    <% end %>
+							<% for team in @account.teams%>			
+								     <li> <%= link_to team.name,team %>	</li>
+							<% end %>
+						    </ul>
+						</li>
+			<script type='text/javascript'>
+			//<![CDATA[	
+				new Tip('team_wall', $('team_wall_content'), {
+				  hideOn: { element: 'tip', event: 'mouseout'},
+				  hideAfter: 0.1,
+				  hook: { tip: 'topLeft', target: 'bottomLeft'},
+				  className: 'darkgrey'
+				});
+			//]]>
+			</script>	
+
+						<%if session[:user]!= nil%>
+						<li>
+							   <%=link_to "<b>My Account</b>","/account/" %> 
+						</li>
+				       <% end%>
+					</ul>
+				</td>
+			</tr>
+		</table>
+   </div> <!-- header ends -->
+
+
+	<div id="main">
+	    <%= yield  %>
+	</div>
+	<div style="padding:10px" class="color">
+	   <div class="container">
+	     <hr/>
+		   <div>
+                <script type="text/javascript" language="JavaScript" src="http://gen.absolut-e.com/footer.js"></script> 
+	       </div>
+		 <div class="text_center small" style="padding:10px"> 
+		     Copyright &copy; 2009 PairWorks.com. All Rights Reserved.
+			 Designated trademarks and brands are the property of their respective owners.      
+		 </div>   
+	  </div>
+	</div>
+ </div><!-- page ends -->
+</div><!-- page-margin ends -->	
+</body>
+</html>
+

@@ -1,0 +1,43 @@
+Feature: Manage Districts
+  In order to make a trafic-rules-enforcing robots
+  As an user
+  I want to create and manage districts
+
+  @finished
+  Scenario: Districts List
+    Given I have districts name Thane, Pune
+    When I go to the list of districts
+    Then I should see "Thane"
+    And I should see "Pune"
+
+  @finished
+  Scenario: Create Valid District
+    Given I have no districts
+    And I am on the list of districts
+    When I follow "New District"
+    And I fill in "name" with "Pune"
+    And I fill in "coordinate" with "2,6"
+    And I fill in "width" with "2"
+    And I fill in "length" with "4"
+    And I press "Create"
+    Then I should see "New district created."
+    And I should see "Pune"
+    And I should have 1 district
+
+  @finished
+  Scenario: Create In-Valid District
+    Given I have no districts
+    And I am on the list of districts
+    When I follow "New District"
+    And I fill in "name" with "Pune"
+    And I fill in "coordinate" with "2"
+    And I fill in "width" with "2"
+    And I fill in "length" with "4"
+    And I press "Create"
+    Then I should see "Coordinate should be at this format"
+    And I fill in "coordinate" with "2,6"
+    And I press "Create"
+    Then I should see "New district created."
+    And I should see "Pune"
+    And I should have 1 district
+

@@ -1,0 +1,15 @@
+Given /^I have districts name (.+)$/ do |titles|
+  titles.split(', ').each do |title|
+    District.create!(:name => title)
+  end
+end
+
+Given /^I have no districts$/ do
+ District.delete_all
+end
+
+Then /^I should have ([0-9]+) district$/ do |count|
+  District.count.should == count.to_i
+end
+
+

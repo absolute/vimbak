@@ -1,0 +1,49 @@
+require File.dirname(__FILE__)+'/../test_helper'
+require 'active_resource'
+require 'active_resource/http_mock'
+require 'active_support/core_ext/hash/conversions'
+require File.dirname(__FILE__)+'/../../lib/pureapp_account_integration'
+
+class ProjectTest < ActiveSupport::TestCase
+  should_have_many :commits
+  
+  should "has one active project commited by last 7 days" do
+    Factory.create(:commit)
+    assert_equal Project.active?.size, 1
+  end
+
+  should "has one in active project not commited by last 7 days" do
+    Factory.create(:commit_at_10_days_before)
+    assert_equal Project.in_active?.size, 1
+  end
+  
+  should "current owner has one active project commited by last 7 days" do
+    commit = Factory.create(:commit)
+    assert_equal Project.current_account(commit.project.account).active?.size, 1
+  end
+
+  should "has one new project" do
+    project =  Factory.create(:new_project)
+    # assert_equal 1, (Project.all - Project.active?- Project.in_active?).size
+    assert_equal 1, project.account.new_project.size
+    assert_equal 1, project.account.new_project.first.name
+  end
+
+  should "active resource" do
+   expected_matz = { :account_id => 1, :first_name => 'Matz',:last_name=>'John',:email=>'matz@pureapp.in.za',:state=>'active',:id=>6 }
+   expected_matz_subscription_plan = {:account_id=>1,:id=>1,:plan_name=>'platinum'}
+   @matz  = { :account_id => 1, :first_name => 'Matz',:last_name=>'John',:email=>'matz@pureapp.in.za',:state=>'active',:id=>6 }.to_xml(:root => 'user')
+   @matz_subscription_plan = {:account_id=>1,:id=>1,:plan_name=>'platinum'}.to_xml(:root=>'subscritpion')
+  
+    ActiveResource::HttpMock.respond_to do |mock|
+       mock.get "/users/current_user_plan.xml",{} , @matz_subscription_plan
+       mock.get "/users/current.xml",{} , @matz
+    end
+    RemoteUser.expects(:headers).returns({}).times(2)
+    assert_equal RemoteUser.current_user.first_name, expected_matz[:first_name]
+    assert_equal RemoteUser.current_user_plan.plan_name, expected_matz_subscription_plan[:plan_name]
+  end
+
+end
+
+

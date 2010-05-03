@@ -1,0 +1,6 @@
+class Robot < ActiveRecord::Base
+  belongs_to :district
+  validates_presence_of :name
+  validates_presence_of :position_direction
+  validates_presence_of :instructions
+end

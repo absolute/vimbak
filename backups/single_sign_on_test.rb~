@@ -1,0 +1,22 @@
+require File.dirname(__FILE__) + '/../helpers'
+require File.dirname(__FILE__) + '/../../lib/single_sign_on'
+require 'rack/test'
+
+class SingleSignOnTest < Test::Unit::TestCase
+  include Rack::Test::Methods
+
+  def app
+    Sinatra::Application
+  end
+
+
+  describe "single sign url routes properties" do
+    it "check home page url" do
+      get '/account/login'
+      puts last_response.inspect
+      assert last_response.ok?
+      assert_equal 'Welcome', last_response.body      
+    end
+  end
+
+end

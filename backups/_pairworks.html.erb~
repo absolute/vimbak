@@ -1,0 +1,194 @@
+    <%= stylesheet_link_tag "blueprint/print", :media => "print" %>
+    <%= javascript_include_tag :defaults %>
+	<%= stylesheet_link_tag "footer.css"%>
+  <% if logged_in? %>
+	   <style type="text/css">
+			#other_applications{ display: none; }
+			#footer_widget hr {border-bottom:1px solid #CCCCCC;display: none;}
+	   </style>
+  <% end %>
+    <%= yield(:head) %>
+</head>
+<body>
+  <div class="container"> 
+	 <table width="100%" style="margin-top:-10px;">
+	   <tr>
+	        <td rowspan="3"  width= "30%">     
+		         <div class="span-7"><%=image_tag ("pairworks.png")%></div>
+		    </td>
+		    <td class="text_right"  >
+		    	   <% if logged_in? %>
+	                   <%= h "Welcome! "+current_user.name %> |
+	    		   <% end %>
+				       <%=link_to "Home", "#{user_application_site}" %> | 
+					   <%=link_to "Tour", "#{user_application_site}/scrumboard/tour" %> | 
+					   <%=link_to "Help", "#{user_application_site}/scrumboard/help" %> | 
+		 	       <% if logged_in? %>
+					   <%=link_to "Logout", "#{user_application_site}/account/logout", { :title => "Log out" } %>  
+	   			   <%else%>
+				       <%=link_to "Pricing and SignUp", "#{user_application_site}/scrumboard/show_user_plans" %> |
+					   <%=link_to "Login", "#{user_application_site}/account/login" %>  
+			       <%end%>
+		     </td>
+	   </tr>
+	   <tr> 
+		      <td >  &nbsp; </td>
+	   </tr>  	
+	   <tr> 
+			   <td >
+					  <ul id="nav" >
+	                     <% if logged_in? %>
+		 				  	 <li id ="top_menu" ><%= image_tag("icons/dashboard.png",:class=>"imgalign",:style=>"padding-right:5px") %><%=link_to_unless_current "Dashboard","#{user_application_site}/scrumboard/dashboard"%></li>
+							 <% if account_owner? -%>
+	          			     <li id ="top_menu"><%= image_tag("icons/team.png",:class=>"imgalign",:style=>"padding-right:5px") %><%=link_to_unless_current "Team","#{user_application_site}/scrumboard/manage_team_with_people"%></li>
+							 <li id ="top_menu"><%= image_tag("icons/people.png",:class=>"imgalign",:style=>"padding-right:5px") %><%=link_to_unless_current "People", users_path %> </li>
+		 		             <% end %>   			   
+	            			 <li id ="top_menu"><%= image_tag("icons/myaccount.png",:class=>"imgalign",:style=>"padding-right:5px") %><%=link_to_unless_current "My Account",current_user %></li>
+	    				 <% end %>
+					  </ul>
+		       </td>
+	   </tr> 
+	 </table>	
+	  <hr/>	  
+  </div>
+  <div class="container page_frame">	
+		<% if logged_in? %>
+		  <div class="span-12" >
+		    <ul id="menu_nav">
+		      <%- if account_owner? -%>
+		        <li  ><%= menu_link_to 'Billing', :controller => 'billing' %></li>
+		      <%- end -%>
+		        <li><%= menu_link_to 'Profile', current_user %></li>
+		    </ul>
+		  </div> 	
+		<% end %>
+		 <%- flash.each do |name, msg| -%>
+		    <%= content_tag :div, msg, :class => "flash #{name}", :style=> "clear:both" %>
+		 <%- end -%>	
+			<%- if show_title? -%>
+		        <h2 class="heading hhc" style="clear:both"><%=h yield(:title) %></h2>
+		    <%- end -%>
+			<div id="container" class="span-15" style="border:1px solid #EBEBEB;-moz-border-radius: 0.5em; background:#ffffff;padding:5px;">
+		      <%= yield %>
+		    </div>
+		    <div class="span-8 last" style="border:1px solid #EBEBEB;-moz-border-radius: 0.5em; background:#ffffff;padding:5px;">
+		      <% if current_page?(:action => 'new',:controller=>'sessions')%>	
+		         <h3 class="hhc">Welcome to <%= user_application_name.capitalize %> !</h3>
+				    Don't have a  <%= user_application_name.capitalize %> account?<br/>
+		            <%=link_to "Sign up","#{user_application_site}/scrumboard/show_user_plans" %> now. 
+					It's easy & Free.
+			  <% elsif current_page?("/signup") || current_page?("/free_signup") || current_page?("/users/create_free_plan")  %>	
+				  <h3 class="hhc">Already registered</h3> or want to make changes to your account?<br/>
+				  <%=link_to "log in" , "#{user_application_site}/account/login" %> now
+			  <% elsif current_page? "/users" %>	
+				  <h3 class="hhc"> Manage People</h3>
+				   <p>
+				      This Page can be accessed only by account owners
+				   </p>
+				  <p>
+				  <b class="hhc">Add New User</b><br/>
+				      click the "Add new user" button, below the user list    
+				  </p>
+				  <p>
+				  <b class="hhc">Edit user</b><br/>
+				      Click the "Show" link in any user to modify and view details  
+				  </p>
+				  <p>
+				  <b class="hhc">Cancel user</b><br/>
+				      Click the "Suspend" link to cancel any user other than account owner.
+					  You can "Unsuspend" any time to resume the user active 
+				  </p>	  
+			  <% elsif current_page? "/users/add_user" %>		
+			    <h3 class="hhc">Add Users</h3>
+				<p>Only account owner can access this page to add user under his account</p>
+				<ul> 
+				    <li>By default the shown password  will be  sent to the added user with activation link.</li>
+				    <li>He/She should use the link to activate  and  login  to their <%= user_application_name.capitalize %> account.</li> 
+				    <li>User can change the password after login to their account.</li>
+			    </ul>
+			  <% elsif current_page? "/billing" %>		
+				<h3 class="hhc">Account Info</h3>
+				
+				<b class="hhc">Change/Upgrade  Plan </b><br/>
+				<p>you can change your plan at any time. We don't charge any thing for changing the plan</p>
+			    <b class="hhc">Update Credit Card Info</b><br/>
+				<ul>
+					<li>In Update Credit Card information </li>
+					<li>Click edit </li>
+				</ul>
+				<b class="hhc">Update Credit Card Address Info</b><br/> 
+				<ul>
+					<li>In Update Credit Card Address information </li>
+					<li>Click edit </li>
+				</ul>
+				<b class="hhc">View Invoice</b><br/> 
+				<ul>
+					<li>Your Billed invoices Will be listed under this head </li>
+					<li>By click the link you can view the detail invoice</li>
+				</ul>
+				<!--
+				<b class="hhc">Cancel Account</b><br/> 
+				<ul>
+					<li>You can cancel your account any time </li>
+					<li>There is no cancellation Charge </li>
+				</ul>
+				-->
+			  <% elsif current_page? "/subscriptions/edit" %>		
+				<h3 class="hhc">Update Your Credit Card</h3>
+				<p>For Changing you credit card info and billing address </p>
+			  <% elsif current_page? "/subscription_addresses/edit" %>		
+				<h3 class="hhc">Update Your Credit Card Address</h3>
+				<p>For Change of your credit card billing address Info </p>
+			  <% elsif current_page? "/billing/cancel?" %>		
+				<h3 class="hhc">Cancellation of Account From <%= user_application_name.capitalize %></h3>
+			    <p> To go back use back button</p>
+			  <% elsif current_page? "/change_plan" %>	
+			    <h3 class="hhc">Paid Account Creation</h3>
+		        <p>
+		          You have reached the right place to manage,
+				  maintain and monitor your project simple and effective.
+		        </p>
+		        <p>
+				  Thank you for choosing us for your project management requirement.
+				  More features of <%= user_application_name.capitalize %> is in pipe line encourage us to serve you better.
+		        </p>
+			  <% else %>	
+				<h3 class="hhc">Update Your Profile</h3>
+		    	<p>
+				  <b class="hhc">Change Password</b><br/>	
+		          Give your new password and confirm password to change your old password 
+		        </p>
+				<p>
+		        <b class="hhc">Change Name</b><br/>
+				  You can change your first name or last name then update 
+				</p>
+			  <% end %>	 
+		    </div>
+			<div >
+		      <%= yield(:right)%>
+		    </div>
+     </div>
+	 <div style="padding:10px;margin:10px;">
+		  <div class="container">
+		    <hr/>	
+		       <div class="text_center" style="padding:10px;">
+                    <script type="text/javascript" language="JavaScript" src="http://gen.absolut-e.com/footer.js"></script>	
+		       </div>
+			   <div class="text_center small" style="padding:10px"> 
+				     Copyright &copy; 2009 PairWorks.com. All Rights Reserved.  Designated trademarks and brands are the property of their respective  owners.      
+			   </div>   
+		  </div>
+	 </div>       
+
+<!-- google analytics -->
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-1332006-11");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>	
+  </body>
+</html>

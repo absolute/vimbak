@@ -1,0 +1,13 @@
+---
+environment: production
+chdir: /home/abs1/pureapp/pureapp
+address: pureapp.in.za
+port: 8910
+pid: /home/abs1/pureapp/pureapp/thin.pid
+rackup: /home/abs1/pureapp/pureapp/config.ru
+log: /home/abs1/pureapp/pureapp/log/thin.log
+max_conns: 1024
+timeout: 30
+max_persistent_conns: 512
+daemonize: true
+servers: 2

@@ -1,0 +1,18 @@
+Feature: Manage Account
+  In order to see project report
+  As an project manager
+  I want to login with application
+
+  @finished 
+  Scenario: can see project report
+    Given I have an account
+    When I complete login
+    Then I should see "Dashboard"
+
+  @finished 
+  Scenario: can i login pureapp
+    Given I have already signup to pureapp
+    When I login to pureapp firsttime
+    Then I should see "Welcome Matz"
+    And I should see "Dashboard"
+

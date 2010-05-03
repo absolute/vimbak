@@ -1,0 +1,24 @@
+<% form_for @robot, :url=> district_robots_path(@district)  do |f| %>
+  <%= hidden_field_tag "robot[district_id]", params[:district_id]  %>
+  <%= f.error_messages %>
+  <p class="normal">
+    <%= f.label :name %><br />
+    <%= f.text_field  :name %>
+  </p>
+  <p class="normal">
+    <%= f.label :position_direction %><br />
+    <%= f.text_field  :position_direction %>
+  </p>
+  <p class="normal">
+    <%= f.label :instructions %><br />
+    <%= f.text_field  :instructions %>
+  </p>
+  <p class="normal">
+    <%= f.submit 'Create' %>
+  </p>
+<% end %>
+
+<%= link_to 'Back', districts_path %>
+
+<p class="input-indent fileupload"><%= use_normal_link %></p>
+<p class="input-field normal"><%= use_fileupload_link %></p>

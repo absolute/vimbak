@@ -1,0 +1,32 @@
+a = 1
+
+load "sample/sample_group.rb"  if a > 12
+
+
+module A
+  def sample
+    "from module A"
+  end
+end
+
+module B
+  def sample
+    "from module B"
+  end
+end
+
+class Progress
+  def sample
+    "from class Progress"
+  end
+end
+
+class Process1 < Progress
+  include B, A
+
+end
+
+pro = Process1.new
+puts pro.sample
+
+

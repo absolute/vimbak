@@ -1,0 +1,39 @@
+!!! Strict
+%html{ :lang => "en", :"xml:lang" => "en", :xmlns => "http://www.w3.org/1999/xhtml" }
+  %head
+    %meta{ :content => "text/html; charset=utf-8", :"http-equiv" => "Content-Type" }
+    %meta{ :content => "en", :"http-equiv" => "Content-Language" }
+    %title= "#{@title.last} | integrity"
+    - stylesheets(:reset_pureapp, :buttons, :integrity)
+    - unless @project.nil?
+      %link{ :rel  => "alternate",                   |
+        :type   => "application/atom+xml",           |
+        :title  => "Build history Atom",             |
+        :href   => "#{project_path(@project)}.atom"} |
+
+  %body
+    #header
+      %div{:style=>"text-align:right"}
+        %a{ :href => "/", :title => "Home" } Home
+        |
+        - if session[:user]
+          Welcome! 
+          = session[:user].first_name if session[:user].respond_to?(:first_name)
+          |
+          %a{ :href => "/account/", :title => "Log out" } My Account
+          |
+          %a{ :href => "/account/logout", :title => "Log out" } Log out
+        - else
+          %a{ :href => "/pricing_and_signup", :title => "Pricing and SignUp" } Pricing and SignUp
+          | 
+          %a{ :href => "/account/login", :title => "Login" } Login      
+      %h1
+        %a{ :href => "/", :title => "The fun continuous integration server" }
+          %img{:alt=>"Working", :src=>"/pureapp.png"}
+    #content= yield
+    #footer
+      - if authorized?
+        Oh, hello
+        %strong&= session[:user].first_name if session[:user].respond_to?(:first_name) 
+      - else
+        Copyright &copy; 2009 PureApp.com. All Rights Reserved. Designated trademarks and brands are the property of their respective owners.

@@ -1,0 +1,17 @@
+<%= flash[:notice] %>
+<table>
+
+<% for district in @districts %>
+<tr>
+  <th>name</th>
+  <th>action</th>
+  <th>launch robot</th>
+</tr>
+  <td><%= district.name %></td>
+  <td><%= link_to "edit",edit_district_path(district)%> <%= link_to 'destroy', district, :confirm => 'Are you sure?', :method => :delete %></td>
+  <td><%= link_to "Launch Robot on #{district.name}", district_path(district)%></td>
+<% end %>
+</table>
+<p><%= link_to "New District", new_district_path %></p>
+
+

@@ -1,0 +1,17 @@
+require File.dirname(__FILE__)+'/../test_helper'
+require 'active_resource'
+require 'active_resource/http_mock'
+require 'active_support/core_ext/hash/conversions'
+
+class ProjectsControllerTest < ActionController::TestCase
+  test "active resource" do
+
+   @matz  = { :account_id => 1, :first_name => 'Matz',:last_name=>'John',:email=>'matz@pureapp.in.za',:state=>'active',:id=>6 }.to_xml(:root => 'users')
+   @matz_subscription_plan = {:account_id=>1,:id=>1,:plan_name=>'platinum'}.to_xml(:root=>'subscritpion')
+  
+    ActiveResource::HttpMock.respond_to do |mock|
+       mock.get "/users/current_user_plan.xml", {"Authorization" =>"f55f9c2c9fd2b32ea8a4c00847543056", "sso_callback"=>"http://pws.com/sso/login"}, @matz_subscription_plan
+       mock.get "/users/current_user.xml",{"Authorization" => "f55f9c2c9fd2b32ea8a4c00847543056", "sso_callback"=>"http://pws.com/sso/login"} , @matz
+    end
+  end
+end

@@ -1,0 +1,13 @@
+Given /^a new user$/ do
+  visit '/session/new'
+  click_link 'login'
+end
+
+When /^I have signup an application$/ do
+  
+end
+
+Then /^I should see successfully signup$/ do
+  pending
+end
+

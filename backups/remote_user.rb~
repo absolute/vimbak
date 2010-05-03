@@ -1,0 +1,21 @@
+require 'activeresource'
+
+class RemoteUser < ActiveResource::Base
+  class_inheritable_accessor :headers
+  self.site = "http://accounts.abs.com:3001"
+  self.element_name = "user"
+    class << self
+      def current_user
+        find(:one, :from => :current)
+      end
+
+      def current_user_plan
+        find(:one, :from => :current_user_plan)
+      end  
+      
+      def account_users
+        find(:all, :from => :account_users)
+      end
+    end
+  
+end

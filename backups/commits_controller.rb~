@@ -1,0 +1,6 @@
+class CommitsController < ApplicationController
+  layout :projects
+  def show
+    @commit = Commit.find(params[:id])
+  end
+end

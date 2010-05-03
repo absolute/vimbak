@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+   <%= javascript_include_tag :defaults %>
+   <%= stylesheet_link_tag 'common_css/absolute_central_draft.css' %>
+   <%= stylesheet_link_tag 'common_css/drop_down.css' %>
+   <%= stylesheet_link_tag 'common_css/nav_shinybuttons.css' %>
+   <%= stylesheet_link_tag 'app.css' %>
+   <%= stylesheet_link_tag "footer.css"%>
+
+   <style type="text/css">
+		  #footer_widget hr {border-bottom:1px solid #CCCCCC;display: none;}
+   </style>   
+
+</head>
+
+<body class="color">
+	<div class="page_margins" > 
+       <div class="page" >
+          <div id="header" >
+				<table width="100%" >
+				   <tr>
+				        <td rowspan="3"  width= "30%">     
+					         <div ><%=link_to image_tag("pureapp.png") , "/"%></div>
+					    </td>
+					    <td style= "font-size:14px;font-weight:600;color:#fff">
+							   	   &nbsp; Hi Welcome To Pureapp
+					     </td>
+				   </tr>
+				   <tr> 
+					      <td id="plain_link" class="text_right" style= "font-size:14px;font-weight:600;"> 
+							   	   <%=link_to "Tour", :action=>"tour"%> &nbsp;&nbsp;  &nbsp;&nbsp;
+							       <%=link_to "Pricing & SignUp", "/show_user_plans" %> &nbsp;&nbsp;  &nbsp;&nbsp;
+								   <%=link_to "Login" ,  "/account/login" %>
+					      </td>
+				   </tr>  	
+				   <tr> 
+						   <td style= "font-size:14px;font-weight:600;color:#fff">
+								&nbsp;  
+					       </td>
+				   </tr> 
+				 </table>	
+          </div> <!-- header ends -->
+	<div id="main" >
+	    <%= yield  %>
+	</div>
+	<div style="padding:10px" class="color">
+	   <div class="container">
+		      <div>
+                  <script type="text/javascript" language="JavaScript" src="http://gen.absolut-e.com/footer.js"></script>
+	       </div>
+		 <div class="text_center small" style="padding:10px"> 
+		     Copyright &copy; 2009 PairWorks.com. All Rights Reserved.
+			 Designated trademarks and brands are the property of their respective owners.      
+		 </div>   
+	  </div>
+	</div>
+ </div><!-- page ends -->
+</div><!-- page-margin ends -->	
+</body>
+</html>
+

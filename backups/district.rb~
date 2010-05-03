@@ -1,0 +1,8 @@
+class District < ActiveRecord::Base
+  validate :should_valid_coordinate
+  has_many :robots
+protected
+  def should_valid_coordinate
+    errors.add(:coordinate, 'should be at this format eg (2,6)' ) unless !coordinate.nil? && coordinate =~ /^(\d+),(\d+)$/ 
+  end
+end

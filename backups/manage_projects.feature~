@@ -1,0 +1,35 @@
+Feature: Manage Projects
+  In order to get our application code quality report
+  As an project manager
+  I want to create and manage project
+
+  @in-progress
+  Scenario: create new project
+    Given I have already signup to pureapp
+    And I have login to pureapp
+    When I add new project
+      |name       | permalink         | uri                            | branch | command | svn_username| svn_password | 
+      |Hiringopen | venkat-Hiringopen | http://indiaserver.no-ip.info  | master | rake    |  sankar     | sankar       | 
+    When I go to the list of active projects
+    Then I should see "Hiringopen"
+    And I should see "Build"
+    When I follow "Hiringopen"
+    Then I should see "edit"
+
+  @finished
+  Scenario: Projects List
+    Given I have already signup to pureapp
+    And I have login to pureapp
+    Given the following projects exist with commit and build details
+      |name       | permalink         | identifier |  message           | author | output                | committed_at | successful | commit_id  |
+      |Hiringopen | venkat-Hiringopen | 0782       | new features added | sankar | rake aborted!         | 2 hours ago |  0         |     1       |
+      |Agileonweb | venkat-Agileonweb | 9871       | bug fixed          | venkat |  50 assertion passed  | 2 days ago  |  1         |     2       |
+    When I go to the list of active projects
+    Then I should see active project details                                                                                                             
+     | Projects     | Build| Status | Previous Builds |        |                                                                                   
+     | Hiringopen   | 0782 | failed | 2 hours ago     |  Build |                                                                                  
+     | Agileonweb   | 9871 | failed | 2 days ago      |  Build |
+    When I go to the list of other projects
+    Then I should see other project details                                                                                                             
+     | Projects     | Build| Status              | Previous Builds |                                                                                    
+     

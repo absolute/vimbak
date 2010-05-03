@@ -1,0 +1,8 @@
+%p.normal
+  %label{ :for => "project_data_user_name" } user name
+  %input.text#project_data_user_name{ :name => "project_data[user_name]", :type => "text", :value => "" }
+
+%p.normal
+  %label{ :for => "project_data_password" } Password
+  %input.text#project_data_password{ :name => "project_data[password]", :type => "text", :value => '' }
+

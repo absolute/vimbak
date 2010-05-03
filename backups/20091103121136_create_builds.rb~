@@ -1,0 +1,16 @@
+class CreateBuilds < ActiveRecord::Migration
+  def self.up
+    create_table :builds do |t|
+          t.column :started_at,   :datetime
+          t.column :completed_at, :datetime
+          t.column :successful,   :boolean
+          t.column :output,       :text,    :nullable => false, :default => ""
+          t.column :commit_id,    :integer
+          t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :builds
+  end
+end

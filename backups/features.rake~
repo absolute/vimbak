@@ -1,0 +1,18 @@
+require 'cucumber/rake/task'
+ 
+Cucumber::Rake::Task.new do |t|
+  t.cucumber_opts = "--format progress"
+end
+ 
+namespace :features do
+  desc "Run finished features"
+  Cucumber::Rake::Task.new(:finished) do |t|
+    t.cucumber_opts = "--format progress --tags ~in-progress"
+  end
+ 
+  desc "Run in-progress features"
+  Cucumber::Rake::Task.new(:in_progress) do |t|
+    t.cucumber_opts = "--format progress --tags @in-progress"
+  end
+end
+ 

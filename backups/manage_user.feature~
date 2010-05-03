@@ -1,0 +1,11 @@
+Feature: Manage Users
+  As an account owner
+  I want to sign up and manage my account
+  so that i can manage my project task and automate project build 
+  
+  Scenario: Sign up project
+  	Given I have users
+    When I go to new
+    When I go to new
+    Then I should see "Captcha"
+    When I press "create"

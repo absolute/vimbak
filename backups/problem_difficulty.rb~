@@ -1,0 +1,26 @@
+class HowEasy
+
+  def pointVal(str)
+    word_count = 0
+    char_count = 0
+    str.strip.split(' ').each { |word|
+     if isProblemStatement?(word) 
+        word_count +=1 
+        char_count +=word.gsub('.','').size
+     end
+    }
+   average = 0
+   average = char_count/word_count if word_count >0
+    return 250 if average <= 3
+    return 500 if average <= 5
+    return 1000 if average >= 6
+  end
+  def isProblemStatement?(word)
+    /^(\w+)(.)?$/ =~ word && /^(\D+)$/ =~ word 
+  end
+end
+
+string1 = "Implement a class H5 which contains some method."
+string2 = " no9 . wor7ds he8re. hj.."
+puts HowEasy.new.pointVal(string1)
+puts HowEasy.new.pointVal(string2)

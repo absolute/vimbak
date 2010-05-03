@@ -1,0 +1,25 @@
+class RackLayer
+                                                                                                                                                           
+    def initialize(app)                                                                                                                                    
+      @app = app                                                                                                                                           
+    end                                                 
+                                                         
+    def remote_url                                       
+      "http://pureapp.in.za"                             
+    end                                                  
+                                                         
+    def call(env)                                        
+      session = env['rack.session']                      
+      request = Rack::Request.new(env)                   
+      params = request.params                            
+      puts "=========user======="
+      if env['PATH_INFO'] =~ /^\users\//
+        puts "=========================="
+        status,headers,response = @app.call(env)         
+        [status,headers, response]   
+      else
+        status,headers,response = @app.call(env)         
+        [status,headers, response]   
+      end
+    end                                                  
+end                                         

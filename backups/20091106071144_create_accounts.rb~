@@ -1,0 +1,14 @@
+class CreateAccounts < ActiveRecord::Migration
+  def self.up
+    create_table :accounts do |t|
+      t.column :id,         Integer, :serial => true
+      t.column :remote_account_id, Integer
+      t.column :remote_user_id, Integer
+      t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :accounts
+  end
+end

@@ -1,0 +1,22 @@
+class ProjectsController < ApplicationController
+  before_filter :current_user
+  def index
+    if params[:tab] == "active"
+      @projects = Project.current_account(@account).active?
+    else params[:tab] == "new"
+      @projects = Project.current_account(@account).all - Project.current_account(@account).active? - Project.current_account(@account).in_active?
+    else
+      @projects = Project.current_account(@account).in_active?
+    end
+
+  end
+  
+  def show
+   @project = Project.find(params[:id])
+  end 
+
+  def current_user
+    @user = User.find_by_remote_user_id(session[:user].id)
+    @account = @user.account                               
+  end
+end

@@ -1,0 +1,442 @@
+@charset "UTF-8";
+/**
+ * "Yet Another Multicolumn Layout" - (X)HTML/CSS Framework
+ *
+ * (en) Uniform design of standard content elements
+ * (de) Einheitliche Standardformatierungen für die wichtigten Inhalts-Elemente
+ *
+ * @copyright       Copyright 2005-2009, Dirk Jesse
+ * @license         CC-A 2.0 (http://creativecommons.org/licenses/by/2.0/),
+ *                  YAML-C (http://www.yaml.de/en/license/license-conditions.html)
+ * @link            http://www.yaml.de
+ * @package         yaml
+ * @version         3.1
+ * @revision        $Revision: 343 $
+ * @lastmodified    $Date: 2009-01-19 23:41:32 +0100 (Mo, 19. Jan 2009) $
+ * @appdef yaml
+ */
+
+@media all
+{
+ /**
+  * Fonts
+  *
+  * (en) global settings of font-families and font-sizes
+  * (de) Globale Einstellungen für Zeichensatz und Schriftgrößen
+  *
+  * @section content-global-settings
+  */
+
+  /* (en) reset font size for all elements to standard (16 Pixel) */
+  /* (de) Alle Schriftgrößen auf Standardgröße (16 Pixel) zurücksetzen */
+  html * { font-size: 100.01%; }
+
+ /**
+  * (en) reset monospaced elements to font size 16px in all browsers
+  * (de) Schriftgröße von monospaced Elemente in allen Browsern auf 16 Pixel setzen
+  *
+  * @see: http://webkit.org/blog/67/strange-medium/
+  */
+
+  textarea, pre, code, kbd, samp, var, tt {
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier;
+  }
+
+  /* (en) base layout gets standard font size 12px */
+  /* (de) Basis-Layout erhält Standardschriftgröße von 12 Pixeln */
+  body {
+    font-family:  Arial, Helvetica, sans-serif;
+    font-size: 75.00%;
+    color: #646464;
+  }
+
+  /*--- Headings | Überschriften ------------------------------------------------------------------------*/
+
+  h1,h2,h3,h4,h5,h6 {
+    font-family: arial,verdana,sans-serif;
+    font-weight:normal;
+    color:#222;
+  /*  margin: 0 0 0.25em 0;*/
+  }
+
+  h1 { font-size:25px; color:#FF7D07;  }                  
+  h2 { font-size: 20px; color:#072453; }                  
+  h3 { font-size: 16px; font-weight:bold; color:#2060AA; }
+  h4 { font-size: 13px; font-weight:bold; }
+ 
+  /* --- Lists | Listen  -------------------------------------------------------------------------------- */
+
+  ul, ol, dl { line-height: 1.8em; margin: 0 0 1em 1em; }
+  ul li { list-style-type: disc; }
+  ul ul li { list-style-type: circle; }
+  
+  .arrow {list-style-image:url(/images/common_images/arrow-more.gif); }
+  .circle{color:#FF7D07;}
+  .circle span{color:#444444;}
+
+  ol li { list-style-type: decimal; }
+  ol ol li { list-style-type: lower-latin; }
+
+  li { margin-left: 0.8em; line-height: 1.8em; }
+
+  dt { font-weight: bold; }
+  dd { margin: 0 0 1em 0.8em; }
+
+  /* --- general text formatting | Allgemeine Textauszeichnung ------------------------------------------ */
+
+  p { line-height: 1.8em; margin: 0 0 1.5em 0; }
+
+  blockquote, cite,q {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-style:italic;
+  }
+  blockquote { margin: 0 0 1em 1.6em; color: #666; }
+
+  strong,b { font-weight: bold; }
+  em,i { font-style: italic; }
+
+  pre, code, kbd, tt, samp, var { font-size: 100%; }
+  pre, code { color: #800; }
+  pre { line-height: 1.5em; margin: 0 0 1em 0; }
+  kbd, samp, var { color: #666; }
+  var { font-style: italic; }
+
+  acronym, abbr {
+    border-bottom: 1px #aaa dotted;
+    font-variant: small-caps;
+    letter-spacing: .07em;
+    cursor: help;
+  }
+
+  sub, sup { font-size: 91.6667%; color:#FF0000; }
+
+  hr {
+    color: #fff;
+    background:transparent;
+    margin: 0 0 0.5em 0;
+    padding: 0 0 0.5em 0;
+    border:0;
+    border-bottom: 1px #eee solid;
+  }
+
+  /*--- Links ----------------------------------------------------------------------------------------- */
+
+  a { color: #4D87C7; background:transparent;  }
+  a:visited  { color: #036; }
+  a:focus,
+  a:hover,
+  a:active { color:#182E7A; }
+  li a{ text-decoration:underline;  }
+  
+  /*--- Link button ----------------------------------------------------------------------------------------- */
+  a.button:hover { color: #ffffff; text-decoration:none; font-weight:bold; }
+  a.button { color: #ffffff; background:#0086A8; text-decoration:none; padding: 0.4em 1.2em; font-weight:bold; border:1px solid #005A75;  }
+  a.button:visited { color: #ffffff; }
+
+
+
+  /* --- images (with optional captions) | Bilder (mit optionaler Bildunterschrift) ------------------ */
+
+  p.icaption_left { float:left; display:inline; margin: 0 1em 0.15em 0; }
+  p.icaption_right { float:right; display:inline; margin: 0 0 0.15em 1em; }
+
+  p.icaption_left img,
+  p.icaption_right img { padding:0; border: 1px #888 solid; }
+
+  p.icaption_left strong,
+  p.icaption_right strong { display:block; overflow:hidden; margin-top: 2px; padding: 0.3em 0.5em; background: #eee; font-weight: normal; font-size: 91.667%; }
+
+ /**
+  * ------------------------------------------------------------------------------------------------- #
+  *
+  
+  
+  
+  * Generic Content Classes
+  *
+  * (en) standard classes for positioning and highlighting
+  * (de) Standardklassen zur Positionierung und Hervorhebung
+  *
+  * @section content-generic-classes
+  */
+
+  .highlight { color: #f60; }
+  .dimmed { color: #888; }
+
+  .info { background: #f8f8f8; color: #666; padding: 10px; margin-bottom: 0.5em; font-size: 91.7%; }
+
+  .note { background: #efe; color: #040; border: 2px #484 solid; padding: 10px; margin-bottom: 1em; }
+  .important { background: #ffe; color: #440; border: 2px #884 solid; padding: 10px; margin-bottom: 1em; }
+  .warning { background: #fee; color: #400; border: 2px #844 solid; padding: 10px; margin-bottom: 1em; }
+
+  .float_left { float: left; display:inline; margin-right: 1em; margin-bottom: 0.15em; }
+  .float_right { float: right; display:inline; margin-left: 1em; margin-bottom: 0.15em; }
+  .center { display:block; text-align:center; margin: 0.5em auto; }
+  .top_gap{ margin-top:1em;}
+  * html .top_gap{ margin-top: 0.2em;}
+  *+html .top_gap{ margin-top: 0.2em;}
+
+ /**
+  * ------------------------------------------------------------------------------------------------- #
+  *
+  * Tables | Tabellen
+  *
+  * (en) Generic classes for table-width and design definition
+  * (de) Generische Klassen für die Tabellenbreite und Gestaltungsvorschriften für Tabellen
+  *
+  * @section content-tables
+  */
+
+  table {
+		border-collapse:collapse;
+		font-family:arial,helvetica,sans-serif;
+		font-size:12px;
+	}
+  thead th {	padding:7px 0 7px 5px;}
+  tbody th { 
+  		padding:0.5em;
+		border:none;
+		text-align:left;
+		font-family:arial,helvetica,sans-serif;
+		font-size:12px;
+	}
+	
+	/* -----------------------------------------Gray color table-------------------------------------------------------- */
+    table.gray{
+		width:100%;
+		border:1px solid #E6E6E6;
+		border:none;
+	}
+	table.gray thead th {	padding:7px 0 7px 5px;}
+	table.gray tbody th{
+		border:1px solid #E6E6E6;
+		background:#E9E9E9;
+		color:#000000;
+		padding:7px 0 7px 5px;
+	}
+    table.gray tbody th[scope="row"], tbody th.sub { background: #f0f0f0; }
+    table.gray tbody tr{border:1px solid #E6E6E6;}
+    table.gray tbody tr:hover th[scope="row"],
+    table.gray tbody tr:hover td { background:#F5F5F5; }
+    table.gray tbody td{border:1px solid #E6E6E6; padding:10px 2px 10px 5px;}
+	
+	/* -----------------------------------------Blue color table-------------------------------------------------------- */
+	table.blue { 
+   		width:100%;
+		color: #000;
+		text-align: left;
+		border-collapse: collapse;
+		border: 2px solid #739ACB;
+	}
+	 table.blue a {
+		text-decoration: underline;
+		color: #105c6e;
+	}
+	
+	table.blue a:hover,  table.blue a:active {
+		background-color: #739ACB;
+		color: #eee;
+	}
+	table.blue th {
+		font-size: 105%;
+		color: #eee;
+		background-color: #739ACB;
+		border-bottom: 2px solid #739ACB;
+		text-align:left;
+	}
+	table.blue tr {
+		vertical-align: top;
+	}
+	table.blue tr, table.blue th, table.blue td {
+		padding: .75em;
+	}
+	table.blue caption {
+		height: 27px;
+		color: white;
+		text-align: left;
+		background: #fff url(/images/common_images/table/table_designs.jpg) no-repeat;
+		margin-left:-1px;
+	}
+	table.blue caption div{
+		font-weight:bold;
+		font-size:13px;
+		width:160px;
+		padding-top:5px;
+		text-align:center;
+	}
+	table.blue tr.odd td, table.blue tr.odd th {
+		background-image: url(/images/common_images/table/tealbg.jpg);
+		background-repeat: repeat;
+	}
+	table.blue tfoot th, table.blue tfoot td {
+		padding: 0.2em .75em;
+		color: #3a4e58;
+		font-weight: bold;
+		font-size: 105%;
+	}
+	table.blue tfoot th {
+		text-align: right;
+	}
+
+/*--------------------------------Pagination----------------------------------------*/
+	.pagination { text-align: center; padding: .3em; }
+    .pagination a, .pagination span {padding: .1em .5em; }
+	.pagination span.disabled {color: #AAA; }
+	.pagination span.current {font-weight: bold; color: #FF7D07; }
+	.pagination a {border: 1px solid #DDDDDD;color: #0063DC; text-decoration: none; }
+	.pagination a:hover, .pagination a:focus {border-color:#005A75; background: #0086A8;color: white; }
+	.pagination .page_info {color: #aaa;padding-top: .8em; }
+	.pagination .prev_page, .pagination .next_page {border-width: 2px; }
+	.pagination .prev_page {margin-right: 1em; }
+	.pagination .next_page {margin-left: 1em; }
+/*--------------------------------Date------------------------------------*/	
+.date {
+	background-attachment:scroll;
+	background-color:transparent;
+	background-image:url(/images/common_images/calendar.jpg);
+	background-repeat:no-repeat;
+	float:right;
+	font-family:"Georgia",serif;
+	height:69px;
+	margin:0 2px 0 0;
+	padding:5px 0;
+	text-align:center;
+	width:58px;
+	}
+.date .year {
+	color:#FFFFFF;
+	display:block;
+	font-size:12px;
+}
+.date .month {
+	color:#00567E;
+	display:block;
+	font-size:17px;
+	margin:6px 0 0;
+	text-transform:uppercase;
+}
+.date .day {
+	color:#606060;
+	font-size:14px;
+}
+/*--------------------------------photo & video--------------*/
+.photo_frame{
+	height:230px;
+	margin-top:1em;
+}
+.photo_frame .photo {
+	list-style-type:none;
+	margin:0em;
+	float:left;
+	line-height:normal;
+	display:table-cell;
+}
+.photo_frame .photo li {
+	display:inline;
+	list-style-type:none;
+	float:left;
+	margin:0 12px 9px 0;
+	text-align:center;
+	line-height:0.8em;
+}
+.frame_box{
+	padding:2px;
+	border:1px solid #CCCCCC;
+}
+.video_frame{
+	height:320px;
+	margin-top:1em;
+}
+.video_frame .video{
+	list-style-type:none;
+	margin:0em;
+	float:left;
+	line-height:normal;
+	display:inline;
+}
+.video_frame .video li{
+	overflow:hidden;	
+	list-style-type:none;
+	border:1px solid #686868;
+	display:inline;
+	float:left;
+	margin:0 20px 15px 0;
+	padding:6px;
+	line-height:normal;
+}
+.video_frame .video li .video_width{
+	width:120px;
+}
+.video_frame .video li a{
+	padding:2px 0;
+	font-size:10px;
+	text-decoration:none;
+}
+.icl {
+	float:left;
+}
+/*------------------search_box-----------------*/
+.search * {
+vertical-align:top;
+}
+.search .search_box{
+	width:58em;
+}
+.search .search_box input.text {
+	border:3px solid /*#B4B4B4*/#3990CD;
+	color:#777777;
+	font-size:20px;
+	height:1.5em;
+	padding:0.1em 0;
+	width:30em;
+}
+
+/* -------------------------blue_box---------------------------*/
+.blue_box {
+	background:#F2F5FA url('/images/common_images/blue_box_bg.jpg') no-repeat scroll right top;
+	border:1px solid #A3B3C0;
+	color:#000000;
+	margin:auto;
+	padding-bottom:10px;
+	position:relative;
+	text-align:left;
+	width:100%;
+}
+.blue_box_top_left {
+	background:transparent url('/images/common_images/blue_box_topleft.gif') no-repeat scroll left top;
+	display:block;
+	height:50px;
+	left:-1px;
+	position:absolute;
+	top:-1px;
+	width:25px;
+	z-index:0;
+}
+.blue_box_content {
+	padding:2% 2% 0% 2%;
+	position:relative;
+	z-index:2;
+}
+.blue_box_bottom_right {
+	width:300px; 
+	display:block; 
+	position:absolute; 
+	bottom:-1px; 
+	right:-1px; 
+	height:50px; 
+	z-index:1;
+	background:url('/images/common_images/blue_box_bottomright.gif') bottom right no-repeat;
+}
+/*---------------------------box with border(gray and blue)-----------*/
+.gray_border_box{
+	border:1px solid #EBEBEB;
+	padding:10px;
+	-moz-border-radius:0.5em;
+}
+.blue_border_box{
+	border:1px solid #A3B3C0;
+	padding:10px;
+	-moz-border-radius:0.5em;
+
+}
+}

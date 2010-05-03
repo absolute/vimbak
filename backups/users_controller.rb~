@@ -1,0 +1,15 @@
+class UsersController < ApplicationController
+  validates_captcha
+  def index
+    render :text => "hello user"
+  end
+  
+  def new
+    @user = User.new
+  end
+  
+  def create
+    render :text => "successfully created"
+  end
+
+end

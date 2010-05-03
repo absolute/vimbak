@@ -1,0 +1,24 @@
+hi<% form_for(@district) do |f| %>
+  <%= f.error_messages %>
+  <p>
+    <%= f.label :name %><br />
+    <%= f.text_field  :name %>
+  </p>
+  <p>
+    <%= f.label :coordinate %><br />
+    <%= f.text_field  :coordinate %>
+  </p>
+  <p>
+    <%= f.label :width %><br />
+    <%= f.text_field  :width %>
+  </p>
+  <p>
+    <%= f.label :length %><br />
+    <%= f.text_field  :length %>
+  </p>
+  <p>
+    <%= f.submit 'Create' %>
+  </p>
+<% end %>
+
+<%= link_to 'Back', districts_path %>

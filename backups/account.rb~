@@ -1,0 +1,10 @@
+class Account < ActiveRecord::Base
+  has_many :projects
+  has_many :users
+
+  def new_project
+    self.projects.collect { |project|
+      project if project.commits.empty? 
+    }
+  end
+end

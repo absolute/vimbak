@@ -1,0 +1,63 @@
+require 'activeresource'
+
+class PureappIntegration
+  
+  def initialize(app)
+    @app = app
+  end
+
+  def remote_url
+    "http://pureapp.in.za"
+  end
+
+  def call(env)
+    session = env['rack.session']
+    request = Rack::Request.new(env)
+    params = request.params
+    
+    if !session[:user]
+      RemoteUser.headers = {"Authorization" => params['sso_header']}
+      remote =  RemoteUser.current_user
+      session[:user] = remote
+    end
+    if env["PATH_INFO"] =~ /^\/project\//
+      status,headers,response = @app.call(env)
+      [status,headers, response]
+    elsif env["PATH_INFO"] =~ /\/push/
+      status,headers,response = @app.call(env)
+      [status,headers, response]
+    elsif env["PATH_INFO"] =~ /^\/pricing_and_signup/ 
+      status,headers,response = @app.call(env)
+      [status,headers, response]
+     elsif env["PATH_INFO"] =~ /\*.css/ 
+      status,headers,response = @app.call(env)
+      [status,headers, response]
+     elsif env["PATH_INFO"] =~ /\*.gif/ 
+      status,headers,response = @app.call(env)
+      [status,headers, response]
+    else
+       [302,{"Location"=>"#{remote_url}#{request.path_info}?#{request.query_string()}"},[]]
+    end
+  end
+end
+
+class RemoteUser < ActiveResource::Base
+  class_inheritable_accessor :headers
+  self.site = "http://accounts.abs.com"
+  self.element_name = "user"
+    class << self
+
+      def current_user
+        find(:one, :from => :current)
+      end
+
+      def current_user_plan
+        find(:one, :from => :current_user_plan)
+      end  
+      
+      def account_users
+        find(:all, :from => :account_users)
+      end
+    end
+  
+end

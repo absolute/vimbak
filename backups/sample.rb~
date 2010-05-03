@@ -1,0 +1,7 @@
+class Sample
+  def initialize(*arg)
+    puts arg    
+  end
+end
+
+Sample.new(5,6,8)

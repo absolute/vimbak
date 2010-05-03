@@ -1,0 +1,11 @@
+# Methods added to this helper will be available to all templates in the application.
+module ApplicationHelper
+  def use_fileupload_link(text = 'Use File Upload')
+    %{<a href="#">#{h text}</a>}
+  end
+
+  def use_normal_link(text = 'Use Normal')
+    %{<a href="#">#{h text}</a>}
+  end
+
+end

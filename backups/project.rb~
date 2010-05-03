@@ -1,0 +1,34 @@
+class Project < ActiveRecord::Base
+  has_many :commits
+  belongs_to :account
+
+  # Find active project commited by last 7 days
+  named_scope :active?, lambda { 
+    { 
+   :include    => :commits,
+      :conditions => [
+        "integrity_commits.committed_at >= ?", 
+        Time.now.since(-1.week).to_s(:db)
+      ]
+    }
+  }
+
+  # Find in_active project not commited by last 7 days
+  named_scope :in_active?, lambda { 
+    { 
+      :include    => :commits,
+      :conditions => [
+        "integrity_commits.committed_at <= ?", 
+        Time.now.since(-1.week).to_s(:db)
+      ]
+    }
+  }
+  
+  named_scope :current_account, lambda { |account|
+    {
+      :conditions => ["account_id = ? ", account.id]
+
+    }              
+  }
+
+end

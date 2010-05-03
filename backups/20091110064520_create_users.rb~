@@ -1,0 +1,18 @@
+class CreateUsers < ActiveRecord::Migration
+  def self.up
+    create_table :users do |t|
+      t.column :id,         Integer, :serial => true
+      t.column :remote_account_id, Integer
+      t.column :remote_user_id, Integer
+      t.column :account_id,    Integer
+      t.column :first_name,       String,  :nullable => false
+      t.column :last_name,       String,  :nullable => false          
+      t.column :email,     String,    :nullable => false
+      t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :users
+  end
+end

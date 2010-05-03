@@ -1,0 +1,162 @@
+require 'activeresource'
+
+class SingleSignOn
+    def initialize(app)
+      @app = app
+    end
+    
+    def secret
+      "45fbca9fd46401e01cc6ecc6145d8ae40f3f0d96e32d07ee909e2a9a782b082ea32b8279a2020b88f67c5c41170299c02a04576f460a228114bd64d2fe8379b6"
+    end
+    
+    def salt
+      "435c98ff1409049c1dd4c01e66bc7d6f8edbe1e4a6dcd3e29a8e1a71121440384f2fe78bf120fef6ff8f1819795d7f7f7b52500fa9ed8a006f91c6bc582c7a6c"
+    end
+    
+    def remote_url
+      "http://accounts.pws.com:3001"
+    end    
+
+    def realm_url(req)
+      url = req.scheme + "://"
+        url << req.host
+ 
+        if req.scheme == "https" && req.port != 443 ||
+          req.scheme == "http" && req.port != 80
+        url << ":#{req.port}"
+        end
+ 
+        url
+    end
+
+    def request_url(req)
+        url = realm_url(req)
+        url << req.script_name
+        url << req.path_info
+        url
+    end
+    
+    def call(env)  
+        session = env['rack.session']
+        request = Rack::Request.new(env)
+        params = request.params
+        if env["PATH_INFO"] =~ /^\/account\//
+              if env["PATH_INFO"] =~ /\/\Z/ 
+                 session[:sso_nounce] = sso_nounce(session) 
+                 [302,{"Location"=>"#{remote_url}/?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]        
+              elsif env["PATH_INFO"] =~ /\/login\Z/ 
+                 session[:sso_nounce] = sso_nounce(session) 
+                 [302,{"Location"=>"#{remote_url}/login?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+              elsif env["PATH_INFO"] =~ /\/logout\Z/
+                 session[:sso_nounce] = sso_nounce(session) 
+                 session[:user]= nil
+                 session[:user_plan]=nil
+                 session[:account_users]= nil
+                 [302,{"Location"=>"#{remote_url}/logout?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+              elsif env["PATH_INFO"] =~ /\/signup\Z/
+                 session[:sso_nounce] = sso_nounce(session) 
+                 [302,{"Location"=>"#{remote_url}/signup?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+              elsif env["PATH_INFO"] =~ /\/free_signup\Z/
+                 session[:sso_nounce] = sso_nounce(session) 
+                 [302,{"Location"=>"#{remote_url}/free_signup?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+              elsif env["PATH_INFO"] =~ /\/users\Z/
+                 session[:sso_nounce] = sso_nounce(session)
+                 [302,{"Location"=>"#{remote_url}/users?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+              elsif env["PATH_INFO"] =~ /\/upgrade_plan\Z/
+                 [302,{"Location"=>"#{remote_url}/change_plan?#{request.query_string()}"},[]]
+              else
+                 session[:sso_nounce] = sso_nounce(session) 
+                 [302,{"Location"=>"#{remote_url}/?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+              end
+        elsif env["PATH_INFO"] =~ /^\/sso\/login/
+              if sso_valid_token?(session,params)
+                 RemoteUser.headers = {"Authorization" => sso_header_token(session)}
+                 remote =  RemoteUser.current_user
+                 session[:user] = remote
+                 [302,{"Location"=>"#{realm_url(request)}/callbacks/sso?#{request.query_string()}"},[]]       
+              else
+                 [302,{"Location"=>"#{realm_url(request)}/callbacks/sso_token_not_valid"},[]]
+              end 
+      elsif env["PATH_INFO"] =~ /^\/activate/
+           [302,{"Location"=>"#{remote_url}#{request.path_info}?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+       else
+         if env["PATH_INFO"] =~ /^\/project/ 
+             RemoteUser.headers = {"Authorization" => sso_header_token(session), "sso_callback"=>realm_url(request)}
+             session[:user_plan]=RemoteUser.current_user_plan
+             session[:user]=RemoteUser.current_user             
+             status,headers,response = @app.call(env)
+             [status,headers, response]
+         elsif env["PATH_INFO"] =~ /^\/change_plan/ 
+           RemoteUser.headers = {"Authorization" => sso_header_token(session), "sso_callback"=>realm_url(request) }
+           session[:user_plan]=RemoteUser.current_user_plan
+           session[:user]=RemoteUser.current_user
+           status,headers,response = @app.call(env)
+           [status,headers, response]             
+         else         
+           status,headers,response = @app.call(env)
+           [status,headers, response]
+         end
+     end
+      rescue ActiveResource::ClientError => err
+       session[:sso_nounce] = sso_nounce(session) 
+       session[:user]= nil
+       session[:account_users]= nil
+       [302,{"Location"=>"#{remote_url}/logout?sso_nounce=#{sso_nounce(session)}&sso_callback=#{realm_url(request)}/sso/login&#{request.query_string()}"},[]]
+    end  
+    
+  
+    def sso_nounce(session)
+      session[:sso_nounce] ||= ActiveSupport::SecureRandom.hex(16)
+    end
+
+    def sso_token(*args)
+      key = secret
+      raise 'You must provide an SSO :secret' unless key
+      digest = 'SHA1'
+      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new(digest), key.to_s, args.join)
+    end
+
+    def sso?(session)
+      !!session[:sso_nounce]
+    end
+
+    def sso_salt
+     "435c98ff1409049c1dd4c01e66bc7d6f8edbe1e4a6dcd3e29a8e1a71121440384f2fe78bf120fef6ff8f1819795d7f7f7b52500fa9ed8a006f91c6bc582c7a6c"
+    end
+  
+    def sso_valid_token?(session,params)
+      sso?(session) && (sso_token(sso_salt, session[:sso_nounce]) == params['sso_token'])
+    end
+
+  def sso_header_token(session)
+    # Don't store token in session - otherwise
+    # Could be stolen (if using Cookie session).
+    # So, we need to generate it every time.
+    sso_token(session[:sso_nounce])
+  end
+  
+end
+
+
+
+
+class RemoteUser < ActiveResource::Base
+  class_inheritable_accessor :headers
+  self.site = "http://accounts.pws.com:3001"
+  self.element_name = "user"
+    class << self
+
+      def current_user
+        find(:one, :from => :current)
+      end
+
+      def current_user_plan
+        find(:one, :from => :current_user_plan)
+      end  
+      
+      def account_users
+        find(:all, :from => :account_users)
+      end
+    end
+  
+end

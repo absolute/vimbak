@@ -1,0 +1,11 @@
+def prime(no)
+  if (no%2 == 0 ) return false
+  loop (c=2;c<n) do
+    if ((c%n)==0) break
+    if (c==n) 
+      puts "#{n} its a prime number"
+    end
+    end
+  end
+
+  prime(55)

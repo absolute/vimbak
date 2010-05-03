@@ -1,0 +1,24 @@
+class CreateProjects < ActiveRecord::Migration
+  def self.up
+    create_table :projects do |t|
+     t.column :name,        :string,   :nullable => false
+     t.column :permalink,   :string
+     t.column :uri,         :string,      :nullable => false
+     t.column :branch,      :string,   :nullable => false, :default => "master"
+     t.column :command,     :string,   :nullable => false, :default => "rake"
+     t.column :svn_username, :string
+     t.column :svn_password, :string
+     t.column :building,    :boolean,                      :default  => false
+
+     t.column :account_id,    :integer
+     t.column :account_user_id, :integer
+     t.column :build_id,   :integer
+     t.column :notifier_id, :integer
+     t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :integrity_projects
+  end
+end

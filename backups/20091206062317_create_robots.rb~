@@ -1,0 +1,14 @@
+class CreateRobots < ActiveRecord::Migration
+  def self.up
+    create_table :robots do |t|
+      t.string :position_direction
+      t.string :instructions
+      t.integer :district_id
+      t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :robots
+  end
+end

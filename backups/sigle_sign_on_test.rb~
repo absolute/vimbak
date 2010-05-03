@@ -1,0 +1,27 @@
+require "rubygems" 
+require "rack" 
+require "rack/test"
+require File.dirname(__FILE__)+"/../../lib/single_sign_on"
+
+require 'test/test_helper'
+
+class SingleSignOnTest < ActiveSupport::TestCase
+  include Rack::Test::Methods
+
+  def app
+    ActionController::Dispatcher.new
+  end
+
+  def test_should_redirect_to_project_page
+    get "/account/login" #http://example.com/account/login --> accounts.pws.com:3001/login
+    follow_redirect!     #http://example.com/login -- 404 
+    assert_match /accounts.pws.com/, last_request.url
+    puts request(last_request.url).inspect
+  end
+
+  def test_should_return_not_found
+    get "/account/change_plan" 
+    assert last_response.ok?
+  end
+
+end

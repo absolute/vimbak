@@ -1,0 +1,6 @@
+class sample extends Thread implements Runnable
+{
+  public static void main(String arrg[]) {
+    new Sample().start();
+  }
+}

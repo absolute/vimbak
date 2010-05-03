@@ -1,0 +1,47 @@
+require 'chronic'
+Given /^the following projects exist with commit and build details$/ do |table|
+      user = User.find_by_email('matz@pureapp.in.za')
+  table.hashes.each { |hash| 
+      create_model("project",{:name=>hash[:name],:permalink =>hash[:permalink],:account_id =>user.account.id})
+      project = Project.find_by_name(hash[:name])
+      create_model("commit",{:identifier => hash[:identifier], 
+                              :message => hash[:message],:author => hash[:author],:committed_at => Chronic.parse(hash[:committed_at]),
+                              :project_id => project.id })
+      commit = Commit.find_by_identifier(hash[:identifier])
+      build   =  create_model("build", { :output => hash[:output], :successful => hash[:successful], :commit_id => commit.id })
+  }
+end
+
+Then /^I should see active project details$/ do |expected_table|
+ Then "I should see table details", expected_table
+end
+
+Then /^(\d+) project should exist with state (.*)$/ do |count,state|
+  Project.send("#{state}?").size.should == count.to_i
+end
+
+Then /^I should see other project details$/ do |expected_table|
+ Then "I should see table details", expected_table
+end
+
+Then /^I should see table details$/ do |expected_table|
+  html_table = table_at("#projects").to_a
+  html_table.map! { |r| r.map! { |c| c.gsub(/<.+?>/, '').strip } }
+  puts html_table
+  expected_table.diff!(html_table)
+end
+
+Given /^I have login to pureapp$/ do
+  When "I go to callbacks sso test"
+end
+
+When /^I add new project$/ do |table|
+  user = User.find_by_email('matz@pureapp.in.za')
+  table.hashes.each { |hash|
+     hash.merge!({:account_id => user.account.id})
+     project= create_model('project',hash)
+  }
+end
+
+
+

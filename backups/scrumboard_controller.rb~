@@ -1,0 +1,476 @@
+require 'rufus/scheduler'
+
+class ScrumboardController < ApplicationController
+before_filter :check_logged_in, :only => [:dashboard,:view_product_backlog,:tools,:userstory_category,:team_wall]
+before_filter :get_users_from_saasy, :only=>[ :manage_team_with_people ]
+before_filter :redirect_to_dashboard , :only=>[ :index]
+ include ScrumboardHelper,TasksHelper,ApplicationHelper,UserstoriesHelper
+  def index
+       render :action=>"index",:layout=>"home"
+  end
+  def receive_mail
+    mail = NotificationMailer.create_new_user_info(params[:name],params[:email],Time.now)
+     if NotificationMailer.deliver(mail)
+        flash[:confirm]="Thank you! We will contact you as soon as we launch"
+        redirect_to :action=>"index"      
+     else
+        redirect_to :action=>"index"
+     end  
+  end
+  def dashboard
+     @account = Account.find_by_remote_account_id(session[:user].account_id)
+     @teams=@account.teams
+     @people=@account.people
+      if params[:flag].to_i==1
+       @projects = @account.non_active_projects
+     else
+       @projects=@account.active_projects
+     end  
+  end
+
+#  def view_product_backlog
+#      @project =Project.find(params[:id])
+#       if session[:user].account_id== @project.account.remote_account_id
+#          @account=@project.account
+#          @iteration=@project.iterations.find_by_status("current") 
+#          @product_backlog=@project.product_backlog
+#      else
+#          redirect_to :action=>"index"
+#      end           
+#  end
+  def add_task
+     @userstory=Userstory.find(params[:task][:userstory_id])
+     @iteration=@userstory.iteration
+     open_tsks=@userstory.tasks.find(:all, :conditions => {:status =>["inprocess","todo"]})
+     @obj_hash = parse_task_into_hash(params[:task][:to_do],@userstory)
+       if @obj_hash.class == Hash
+         @task = Task.new(@obj_hash)
+          if @task.save
+            if @userstory.ticket_id!=nil && open_tsks.empty?
+              @iteration.project.account.change_ticket_state_to_open_in_bugtracker(@userstory)
+            end
+             render :action=> "add_task.rjs"
+          else
+             render :action=> "add_task_fail.rjs"
+          end
+      else
+          render :action=> "add_task_fail.rjs"
+      end
+  end  
+  def destroy_task
+    @task = Task.find(params[:task])
+    @userstory=@task.userstory
+    @iteration=@userstory.iteration
+     if @task.update_attributes(:status=>"deleted")
+       render :action =>"delete_task.rjs"
+     end
+  end
+  def undo_destroy_task
+    @task = Task.find(params[:task])
+    @userstory=@task.userstory
+    @iteration=@userstory.iteration
+     if @task.update_attributes(:status=>"todo")
+       render :action =>"undo_delete_task.rjs"
+     end
+  end
+  
+  def add_userstory
+     @iteration = Iteration.find(params[:userstory][:iteration_id])
+     @userstories =@iteration.userstories
+     @userstory = Userstory.new(parse_userstory_into_hash(params[:userstory][:description],@iteration))
+        if @userstory.save
+      render :action=> "add_userstory.rjs"
+    else
+      
+      render :action=> "add_userstory_fail.rjs"
+      
+    end
+  end
+  
+  def destroy_userstory
+    @userstory= Userstory.find(params[:userstory])
+    #@iteration=@userstory.iteration
+    #@userstories =@iteration.userstories
+    @product_backlog=@userstory.product_backlog
+    @tasks = @userstory.tasks 
+     for task in @tasks 
+       task.update_attributes(:status=>"deleted")
+     end 
+     if @userstory.update_attributes(:status=>"deleted")
+        TrackChange.create(:action=>"deleted",:data_change=>@userstory.description,:userstory_id=>@userstory.id,:person_id=>Person.find_by_remote_user_id(session[:user].id).id)
+        render :action =>"delete_userstory.rjs"
+     end
+  end
+  
+   def tools
+       @task=Task.new
+       @userstory = Userstory.new
+       @iteration = Iteration.find(params[:id])  
+       if session[:user].account_id== @iteration.project.account.remote_account_id
+         @userstories =@iteration.userstories
+         @project=@iteration.project
+         @account=@project.account
+         @team=@project.team
+       else
+         redirect_to :action=>"dashboard"
+       end
+   end
+   
+   def change_status_to_inprocess
+       task_id = get_id(params[:id])
+       @userstory = Task.find(task_id).userstory
+       open_tasks=@userstory.tasks.find(:all, :conditions => {:status =>["inprocess","todo"]})
+       @iteration=@userstory.iteration 
+       @task=Task.find(task_id)
+       person=Person.find_by_remote_user_id(session[:user].id)
+       if @task.hour!=nil
+           @task.people.empty? ? @task.update_attributes(:status=>"inprocess",:person_ids=>[person],:self_assigned=>1) : @task.update_attributes(:status=>"inprocess")
+                if @userstory.ticket_id!=nil && open_tasks.empty?
+                    @iteration.project.account.change_ticket_state_to_open_in_bugtracker(@userstory)
+                end
+              render :action=> "change_status.rjs"
+       else
+             render :action=> "change_status_fail.rjs"
+       end 
+   end
+  
+   def change_status_to_done
+      task_id = get_id(params[:id]) 
+      @userstory =Task.find(task_id).userstory
+      @iteration=@userstory.iteration    
+      person=Person.find_by_remote_user_id(session[:user].id)
+      @task=Task.find(task_id)
+      if @task.hour!=nil 
+         @task.people.empty? ? @task.update_attributes(:status=>"done",:person_ids=>[person],:self_assigned=>1) : @task.update_attributes(:status=>"done")
+            if @userstory.ticket_id!=nil && @userstory.completed?
+              @iteration.project.account.change_ticket_state_in_bugtracker(@userstory)
+            end
+            render :action=> "change_status.rjs"
+      else
+          render :action=> "change_status_fail.rjs"
+      end
+   end
+   
+   def change_status_to_todo
+      task_id = get_id(params[:id])
+      @task = Task.find(task_id)
+      @userstory = Userstory.find(params[:userstory])
+      open_tsks=@userstory.tasks.find(:all, :conditions => {:status =>["inprocess","todo"]})
+      @iteration = @userstory.iteration 
+        @task.self_assigned==1 ? @task.update_attributes(:status=>"done",:person_ids=>[],:self_assigned=>nil) : @task.update_attributes(:status=>"done")
+         if @task.update_attributes(:status=>"todo",:userstory_id=> params[:userstory])
+                if @userstory.ticket_id!=nil && open_tsks.empty?
+                    @iteration.project.account.change_ticket_state_to_open_in_bugtracker(@userstory)
+                end
+           render :action=> "change_status.rjs"
+         end
+  end
+  def task_order
+       list = (params["list_#{params[:id]}"] != nil)? "list_#{params[:id]}":"list_inpro_#{params[:id]}"
+         order = params[list]
+             order.each_with_index do |id, index|
+             Task.find(id).update_attribute(:position, index + 1)
+             end
+         render :text => "task order updated successfully"  
+  end
+# to re-order the userstory   
+#   def userstory_order
+#    order=params[:list_userstory]
+#     order.each_with_index do |id, index|
+#      Userstory.find(id).update_attribute(:position, index + 1)
+#    end
+#    render :text => "updated userstory order is: #{order.join(', ')}" 
+#   end
+
+#  def new_file2
+#      @account = Account.find_by_remote_account_id(session[:user].account_id)
+#  end
+#  def new_file
+#     @account = Account.find_by_remote_account_id(session[:user].account_id)
+#      account= Lighthouse.account= params[:account_name]
+#     lighthouse=Lighthouse.token=params[:token]
+#   if account && lighthouse
+#   @lighthouse=Lighthouse::Project.find(:all)
+#   end
+#  end
+#  def show_tickets
+#     @account = Account.find_by_remote_account_id(session[:user].account_id)
+#    Lighthouse.account="pairwork"
+#    Lighthouse.token="3219f69fce97c02850b6f13eb28f03a4032ccdb4"
+#    @lighthouse=Lighthouse::Ticket.find(:all, :params => { :project_id =>params[:x_pro_id]  })
+#  end
+    def done_task_min
+        @userstory =Userstory.find(params[:userstory])
+        @iteration=@userstory.iteration    
+         if params[:flag]==nil
+          render :action=> "done_task_min.rjs"
+         else
+          render :action=> "done_task.rjs"
+           end
+    end
+    def add_userstory_in_product_backlog
+       @product_backlog=ProductBacklog.find(params[:userstory][:product_backlog_id])
+       @obj_hash = parse_pb_userstory_into_hash(params[:userstory][:description],@product_backlog)
+      if  @obj_hash.class==Hash
+           @userstory = Userstory.new(@obj_hash)
+         if @userstory.save
+            TrackChange.create(:action=>"created",:data_change=>@userstory.description,:userstory_id=>@userstory.id,:person_id=>Person.find_by_remote_user_id(session[:user].id).id)
+           render :action=> 'add_userstory_in_product_backlog.rjs'
+         else
+          render :action=> 'add_userstory_in_product_backlog_fail.rjs'
+         end
+     else
+        render :action=> 'add_userstory_in_product_backlog_fail.rjs'
+     end
+    end  
+    def backlog_userstories_ordering
+       @product_backlog=ProductBacklog.find(params[:pb])if !params[:pb].nil?
+       order = params["list_#{params[:id]}"]
+       order.each_with_index do |id, index|
+       Userstory.find(id).update_attribute(:position, index + 1)
+           end
+    end
+    def move_userstory_to_iteration
+      userstory_id = get_id(params[:id])
+      @userstory = Userstory.find(userstory_id)
+      @product_backlog=@userstory.product_backlog
+      @iteration = Iteration.find(params[:iteration])
+     if @userstory.category!=nil 
+         if @userstory.update_attributes(:iteration_id=> @iteration.id ,:product_backlog_id=>nil)
+            if @userstory.ticket_id!=nil
+              @iteration.project.account.change_ticket_state_to_open_in_bugtracker(@userstory)
+            end
+             render :action=> 'move_userstory_to_iteration.rjs'
+         end
+     else  
+             render :action=> 'move_userstory_to_iteration_fail.rjs'
+#           flash[:notice] ="Please Assign Category to Userstory"
+#           render :partial => "backlog_userstories",:locals=>{:product_backlog=>@product_backlog}, :status => :error
+     end
+   end
+   def moving_userstory_from_iteration_to_pb
+     userstory_id = get_id(params[:id])
+     @userstory = Userstory.find(userstory_id)
+     @iteration=@userstory.iteration
+     @product_backlog=ProductBacklog.find(params[:product_backlog])
+     if @userstory.update_attributes(:iteration_id=>nil,:product_backlog_id=>params[:product_backlog])
+#          render :partial=> "backlog_userstories",:locals=>{:product_backlog=>product_backlog} 
+#     else
+#       render :text => "updated userstory fails"
+     end
+   end
+   def move_userstory_to_product_backlog
+      @userstory = Userstory.find(params[:userstory])
+      @iteration=@userstory.iteration
+      @userstories =@iteration.userstories
+      @product_backlog=@userstory.iteration.project.product_backlog
+      if @userstory.update_attributes(:iteration_id=>nil,:product_backlog_id=>@product_backlog.id)
+        render :action =>"move_userstory_to_pb.rjs"
+      end
+   end
+   def undo_move_userstory_from_pb
+      @userstory = Userstory.find(params[:userstory])
+      @product_backlog=@userstory.product_backlog
+      @iteration=@product_backlog.project.iterations.last
+      @userstories = @iteration.userstories
+      if @userstory.update_attributes(:iteration_id=>@iteration.id,:product_backlog_id=>nil)
+        render :action =>"undo_move_userstory_from_pb.rjs"
+      end
+   end
+   def complete_the_iteration
+       @iteration = Iteration.find(params[:iteration])
+       @userstories =@iteration.userstories
+       @product_backlog=@iteration.project.product_backlog
+       total_planned_points = @iteration.total_points 
+     if @iteration.whether_points_assigned_to_all_userstories
+         @userstories.each {|us| 
+                    if !us.completed?
+                      us.update_attributes(:iteration_id=>nil,:product_backlog_id=>@product_backlog.id)               
+                    end
+                      } 
+          if @iteration.update_attributes(:status=>"complete",:planned_points=>total_planned_points)
+            redirect_to :action =>"show",:controller=>"product_backlogs",:id=>@iteration.project
+            flash[:notice] ="The #{@iteration.title} has been completed Successfully"   
+          else
+            render :text =>"hi"
+          end
+     else
+          redirect_to :action =>"tools",:id=>@iteration
+          flash[:notice] ="please assign points to all userstories before complete the iteration "   
+     end  
+   end
+   def view_complete_iteration
+     @project=Project.find(params[:id])
+     @account=@project.account
+     @iterations=@project.iterations
+     if params[:flag].to_i == 1
+       render :action=>"hide_completed_iteration.rjs"
+     else
+       render :action=>"view_all_completed_iteration.rjs"
+     end
+   end
+   def show_projects_report
+     @project=Project.find(params[:id])
+     @account=@project.account
+     @iterations=@project.iterations
+     if params[:flag].to_i == 1
+       render :action=>"hide_project_report.rjs"
+     else
+       render :action=>"show_project_report.rjs"
+     end
+   end
+# these are newly created mtds  
+   def userstory_category
+    @userstory=Userstory.find(params[:userstory])
+    @userstory.update_attributes(:category=>params[:category])
+   end
+   def project_history
+     @project=Project.find(params[:id])
+     @account=@project.account
+     @iterations=@project.iterations
+   end
+   def show_completed_iteration
+     @iteration = Iteration.find(params[:id])
+   end
+   def project_reports
+     @project=Project.find(params[:id])
+     @account=@project.account
+     @iteration=@project.iterations.find_by_status("current")
+     @iterations=@project.iterations
+   end
+#ens
+   def get_userstory_from_product_backlog
+     @iteration = Iteration.find(params[:iteration])
+     @userstories = @iteration.userstories
+     if params[:userstory] != nil
+       userstory=params[:userstory]
+         for us in userstory
+            @userstory = Userstory.find(us)
+            @userstory.update_attributes(:iteration_id=> params[:iteration],:product_backlog_id=>nil)
+         end
+     end
+      render :action=>"get_userstory_from_product_backlog.rjs"
+   end
+
+   def list_pb_userstories
+     @iteration=Iteration.find(params[:id])
+     product_backlog=@iteration.product_backlog
+     render :partial => "list_pb_userstories", :locals=>{:product_backlog=>product_backlog}
+   end
+   def collapse_or_expand_all
+     @iteration=Iteration.find(params[:iteration])
+     @userstories=@iteration.userstories
+       if params[:flag].to_i ==1
+         render :action=>"collapse_all.rjs"
+       else
+         render :action=>"expand_all.rjs"
+       end
+   end
+   def show_or_hide_graph
+     @iteration=Iteration.find(params[:iteration])
+       if params[:flag].to_i!=1
+         render :action=>"show_graph.rjs"
+       else
+         render :action=>"hide_graph.rjs"
+       end  
+   end
+   def manage_team_with_people
+     @account = Account.find_by_remote_account_id(session[:user].account_id)
+     @teams=@account.teams
+     @people=@account.people
+    end
+   def assign_people
+     @team=Team.find(params[:team])
+     @person=Person.find(params[:person])
+     person_existed_teams=@person.teams
+      if params[:flag].to_i==1
+           person_existed_teams.delete( @team )  
+           @person.update_attributes(:team_ids=> person_existed_teams)
+            render :action=>"remove_person.rjs"
+       else
+          person_existed_teams << @team       
+          @person.update_attributes(:team_ids=>person_existed_teams)
+           render :action=>"assign_person.rjs"
+       end
+   end
+   def show_user_plans
+      render :action=>"show_user_plans",:layout=>"home" 
+   end
+   def upgrade_plan
+     @account = Account.find_by_remote_account_id(session[:user].account_id)
+   end
+   def help
+     if session[:user] == nil
+        render :action=>"help",:layout=>"home"
+     else
+        @account = Account.find_by_remote_account_id(session[:user].account_id)
+        render :action=>"help",:layout=>"scrumboard"
+     end
+   end
+   def tour
+      if session[:user] == nil
+         render :action=>"tour",:layout=>"home"
+       else
+        @account = Account.find_by_remote_account_id(session[:user].account_id)       
+         render :action=>"tour",:layout=>"scrumboard"
+       end  
+  end
+private 
+#   def check_logged_in
+#     if session[:user] == nil
+#       redirect_to("/account/login")
+#     else
+#       true
+#     end
+#   end
+   
+   def get_users_from_saasy
+     @account = Account.find_by_remote_account_id(session[:user].account_id)
+     @people = @account.people
+      remote_account_users = []
+      session[:account_users].each{ |remote_user|
+                      flag = 0
+                 @people.each { |person|
+                          if person.remote_user_id == remote_user.id 
+                          flag = 1
+                            if person.name != remote_user.first_name || person.last_name != remote_user.last_name 
+                                        person.update_attributes( 
+                                                  :name=>remote_user.first_name,
+                                                  :last_name=>remote_user.last_name)
+                             end  
+                           end  
+                              }
+            remote_account_users << remote_user  if flag != 1
+                               }
+                 for remote_user in remote_account_users              
+                               person=Person.new( :account_id=> @account.id,
+                                                  :name=>remote_user.first_name,
+                                                  :last_name=>remote_user.last_name,
+                                                  :remote_user_id=>remote_user.id,
+                                                  :email=>remote_user.email)
+                               person.save!
+                end
+   end
+   def redirect_to_dashboard
+     if session[:user] == nil
+       true
+     else
+       redirect_to("/scrumboard/dashboard")
+     end
+   end
+
+
+#  def get_users_from_saasy
+#   @account = Account.find_by_remote_account_id(session[:user].account_id)
+#   @people = @account.people
+#    new_remote_users=session[:account_users].from(@people.size)
+#         for remote_user in new_remote_users
+#             person=Person.new(:account_id=> @account.id,
+#                              :name=>remote_user.first_name,
+#                              :last_name=>remote_user.last_name,
+#                              :remote_user_id=>remote_user.id,
+#                              :email=>remote_user.email)
+#              person.save!
+#        end
+#  end
+ end 

@@ -1,0 +1,8 @@
+require 'rubygems'
+require 'twitter'
+require 'pp'
+ 
+ 
+httpauth = Twitter::HTTPAuth.new("sankaranarayanan.e@gmail.com", "suresh")
+base = Twitter::Base.new(httpauth)
+base.post("short_message using program")

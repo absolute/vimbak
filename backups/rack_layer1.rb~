@@ -1,0 +1,31 @@
+class RackLayer
+                                                                                                                                                           
+    def initialize(app)                                                                                                                                    
+      @app = app                                                                                                                                           
+    end                                                                                                                                                    
+                                                                                                                                                           
+    def remote_url                                                                                                                                         
+      "http://pureapp.in.za"                                                                                                                               
+    end                                                                                                                                                    
+                                                                                                                                                           
+    def call(env)                                                                                                                                          
+      session = env['rack.session']                                                                                                                        
+      request = Rack::Request.new(env)                                                                                                                     
+      params = request.params                                                                                                                              
+                                                                                                                                                           
+      if !session[:user]                                                                                                                                   
+        RemoteUser.headers = {"Authorization" => params['sso_header']}                                                                                     
+        remote =  RemoteUser.current_user                                                                                                                  
+        session[:user] = remote                                                                                                                            
+      end                                                                                                                                                  
+      if env["PATH_INFO"] =~ /^\/project\//                                                                                                                
+        status,headers,response = @app.call(env)                                                                                                           
+        [status,headers, response]                                                                                                                         
+      elsif env["PATH_INFO"] =~ /\/push/                                                                                                                   
+        status,headers,response = @app.call(env)                                                                                                           
+        [status,headers, response]                                                                                                                         
+      else                                                                                                                                                 
+         [302,{"Location"=>"#{remote_url}#{request.path_info}"},[]]                                                                                        
+      end                                                                                                                                                  
+    end                                                                                                                                                    
+end                                         

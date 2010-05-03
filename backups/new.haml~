@@ -1,0 +1,51 @@
+%form{ :method => "post", :action => (@project.new_record? ? root_path("/project") : project_path(@project)) }
+  - unless @project.new_record?
+    .hidden
+      %input{ :name => "_method", :type => "hidden", :value => "put" }
+
+  %p.required{ :class => error_class(@project, :name) }
+    %label{ :for => "project_name" }<
+      &== Name #{errors_on @project, :name}
+    %input.text#project_name{ :name => "project_data[name]", :type => "text", :value => h(@project.name) }
+
+  %p.required{ :class => error_class(@project, :uri) }
+    %label{ :for => "project_repository" }<
+      &== Svn or Git repository #{errors_on @project, :uri}
+    %input.text#project_repository{ :name => "project_data[uri]", :type => "text", :value => h(@project.uri) }
+
+  %p.normal{ :class => error_class(@project, :branch) }
+    %label{ :for => "project_branch" }<
+      &== Branch to track #{errors_on @project, :branch}
+    %input.text#project_branch{ :name => "project_data[branch]", :type => "text", :value => "master", :value => h(@project.branch) }
+
+  %p.normal
+    %label{ :for => "project_data_user_name" } svn user name
+    %input.text#project_data_user_name{ :name => "project_data[svn_username]", :type => "text", :value => h(@project.svn_username)}
+
+  %p.normal
+    %label{ :for => "project_data_password" } svn password
+    %input.text#project_data_password{ :name => "project_data[svn_password]", :type => "text", :value => h(@project.svn_password) }
+
+  - @build_commands.each do |build_command|
+    %p.normal.checkbox
+    %label{ :for => "#{build_command.command}" }&= build_command.command
+    %input.checkbox#build_command{ checkbox("project_data[command]", build_command.id,:checked=>@project.command?(build_command.command),:value=>build_command.command) }
+
+  - notifier_form
+  %p.submit
+    %button.positive{ :type => "submit" }= @project.new_record? ? "Create Project" : "Update Project"
+
+- unless @project.new_record?
+  %h2 Push URL
+  %p
+    You can use this Push URL with your GitHub project to enable automated continuous integration.
+  %p
+    %code#push_url= push_url_for(@project)
+
+  %form{ :method => "post", :action => project_path(@project) }
+    .hidden
+      %input{ :name => "_method", :type => "hidden", :value => "delete" }
+    %h2 Delete this project
+    %p.submit.destroy
+      This will delete the project and all the builds in the system
+      %button.negative{ :type => "submit" } Yes, I'm sure, nuke it

@@ -1,0 +1,9 @@
+require File.dirname(__FILE__)+'/test_helper'
+
+class RobotTest < ActiveSupport::TestCase
+   
+  test "should presence of robot name" do
+    robot = Robot.create!(:name=>'sankar',:position_direction=>'1,2,N',:instructions =>'LMNLNMN')
+
+  end
+end

@@ -1,0 +1,107 @@
+require "forwardable"
+
+module Integrity
+  class ProjectBuilder
+    extend Forwardable
+
+    attr_accessor  :project, :scm, :user, :commit_identifier
+    def_delegators :project, :name, :uri, :command, :branch, :svn_password, :svn_username
+    def_delegators :user, :first_name
+    
+    def self.build(commit)
+      new(commit.project).build(commit)
+    end
+
+    def self.delete_working_directory(project)
+      new(project).delete_code
+    end
+
+    def initialize(project)
+      @project = project
+      @account = @project.account
+      @user = User.first(:remote_user_id => @account.remote_user_id)
+      Integrity.log "==creating scm svn username #{svn_username},password=#{svn_password}=="
+      @scm = SCM.new(uri, branch, export_directory,svn_username,svn_password)
+    end
+
+    def build(commit)
+      build = commit.build
+      build.start!
+
+      @commit_identifier = commit.identifier
+
+      Integrity.log "Building #{commit.identifier} (#{branch}) of #{name} in" +
+        "#{export_directory} using #{scm.name}"
+
+      scm.with_revision(commit.identifier) do
+        Integrity.log "(cp #{metric_fu_rake_task} #{scm.working_directory}/lib/tasks)"
+        IO.popen("(cp #{metric_fu_rake_task} #{scm.working_directory}/lib/tasks)")
+
+        Integrity.log "Running `#{command}` in #{scm.working_directory}"
+        IO.popen("(cd #{scm.working_directory} && #{command}) 2>&1", "r") {
+          |output| build.output = output.read }
+        build.successful = $?.success?
+      end
+
+      build
+      if command.include? "metrics"
+  		  Integrity.log "move report directory #{report_directory} to #{mv_report_directory}"  
+        report_dir = Pathname.new(report_directory)
+        #report_dir = Pathname.new(symlink_report_directory)
+        #report_dir.make_symlink(report_directory) if !report_dir.symlink?
+        mv_path = Pathname.new(mv_report_directory) 
+        mv_path.mkpath if !mv_path.directory?
+        FileUtils.mv(report_directory,mv_report_directory, :verbose => true) if report_dir.directory? 
+      end
+    ensure
+      build.complete!
+      commit.update_attributes(scm.info(commit.identifier) || {})
+      if !@project.last_two_commit_build_status || @project.last_two_commit_build_status.uniq.length == 2 || @project.commits.length == 1
+        Integrity::Notifier::Email.new(commit, email_configuration).deliver! 
+      end
+      
+      project.notifiers.each { |notifier| notifier.notify_of_build(build) }
+    end
+    
+    def email_configuration
+           config = {
+                 "host" => Integrity.config[:host],
+                 "port" => Integrity.config[:port].to_i,
+                 "domain" => Integrity.config[:domain],
+                 "user" => Integrity.config[:user],
+                 "pass" => Integrity.config[:pass] ,
+                 "auth" => :login, 
+                 "to"   => @user.account_users_emails,
+                 "from" => Integrity.config[:from]  
+               }      
+    end
+
+    def delete_code
+      FileUtils.rm_r export_directory
+    rescue Errno::ENOENT
+      nil
+    end
+
+    private
+      def export_directory
+        Integrity.config[:export_directory] / "#{first_name}/#{SCM.working_tree_path(uri)}-#{branch}"
+      end
+
+      def metric_fu_rake_task
+        Integrity.config[:metric_fu]
+      end
+
+      def report_directory
+        "#{scm.working_directory}/tmp/metric_fu/output"
+      end
+      
+      def mv_report_directory
+        Integrity.config[:report_directory]/"#{@project.id}/#{@commit_identifier}"
+      end
+      
+      def symlink_report_directory
+        Integrity.config[:report_directory] / "#{@project.id}-#{@project.name}"
+      end    
+      
+  end
+end

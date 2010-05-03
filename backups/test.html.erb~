@@ -1,0 +1,9 @@
+<html>
+<body>
+<%puts "in view" %>
+<div id="project">
+  Hello test case!
+  <a href="/callbacks/sso">callbacks</a>
+</div>
+</body>
+</html>

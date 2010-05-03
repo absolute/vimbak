@@ -1,0 +1,54 @@
+require 'factory_girl'
+ 
+Factory.define :project do |a|
+  a.name 'Hiringopen'
+  a.permalink 'venkat-Hiringopen'
+  a.uri 'http://indiaserver.no-ip.info/repo/assist/trunk'
+  a.branch 'master'
+  a.command 'rake'
+  a.building 0
+  a.svn_password 'sample'
+  a.svn_username 'sample'
+  a.association :account
+  a.account_user_id 1
+end
+
+Factory.define :commit do |com|
+  com.identifier  '0782'
+  com.message 'new features added'
+  com.author 'sankar'
+  com.committed_at 2.day.ago.to_s(:db)
+  com.association :project
+end
+
+Factory.define :build do |b|
+  b.successful 1
+  b.output 'rake aborted!'
+  b.association :commit
+end
+
+Factory.define :commit_at_10_days_before, :class=>'commit' do |com|
+  com.identifier  '0782'
+  com.message 'new features added'
+  com.author 'sankar'
+  com.committed_at 10.day.ago.to_s(:db)
+  com.association :project
+end
+
+Factory.define 'account' do |account|
+  account.remote_user_id 1
+  account.remote_account_id 1
+end
+
+Factory.define :new_project do |a|
+  a.name 'Pureapp'
+  a.permalink 'venkat-pureapp'
+  a.uri 'http://indiaserver.no-ip.info/repo/pureapp/trunk'
+  a.branch 'master'
+  a.command 'rake'
+  a.building 0
+  a.svn_password 'sample'
+  a.svn_username 'sample'
+  a.association :account
+  a.account_user_id 1
+end

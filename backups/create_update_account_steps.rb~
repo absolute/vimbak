@@ -1,0 +1,35 @@
+Given /^I have an account$/ do
+  Factory.create(:account)
+end
+
+When /^I complete login$/ do
+
+   @matz  = { :account_id => 1, :first_name => 'Matz',:last_name=>'John',:email=>'matz@pureapp.in.za',:state=>'active',:id=>6 }.to_xml(:root => 'user')
+   @matz_subscription_plan = {:account_id=>1,:id=>1,:plan_name=>'platinum'}.to_xml(:root=>'subscritpion')
+  
+    ActiveResource::HttpMock.respond_to do |mock|
+       mock.get "/users/current_user_plan.xml",{} , @matz_subscription_plan
+       mock.get "/users/current.xml",{} , @matz
+    end
+    RemoteUser.expects(:headers).returns({}).times(2)
+    When "I go to callbacks sso test"
+    When "I go to the list of active projects"
+end
+
+Given /^I have already signup to pureapp$/ do
+
+   @matz  = { :account_id => 1, :first_name => 'Matz',:last_name=>'John',:email=>'matz@pureapp.in.za',:state=>'active',:id=>6 }.to_xml(:root => 'user')
+   @matz_subscription_plan = {:account_id=>1,:id=>1,:plan_name=>'platinum'}.to_xml(:root=>'subscritpion')
+  
+    ActiveResource::HttpMock.respond_to do |mock|
+       mock.get "/users/current_user_plan.xml",{} , @matz_subscription_plan
+       mock.get "/users/current.xml",{} , @matz
+    end
+    RemoteUser.stubs(:headers).returns({})
+end
+
+
+When /^I login to pureapp firsttime$/ do
+  When "I go to callbacks sso test"
+end
+
