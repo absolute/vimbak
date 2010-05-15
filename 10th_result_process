@@ -1,0 +1,9 @@
+1. create tar.gz
+2. ftp
+production
+3. unzip (tar -zxvf dbf.tar.gz)
+4. check whether database, table name and column exist
+5. dbf2mysql -hlocalhost -U(user name) -P(password) -d(database name) -t(your table name)  (dbf file name)
+
+
+
